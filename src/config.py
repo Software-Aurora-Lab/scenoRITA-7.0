@@ -30,7 +30,9 @@ class SCRIPTS:
 
 
 # Other Configurations
-SIM_CONTROL_RELEASE = "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.0.zip"
+SIM_CONTROL_RELEASE = (
+    "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.0.zip"
+)
 SIM_CONTROL_RELEASE_NAME = "sim_control_standalone-7.0.0"
 LOGGING_PREFIX_REGEX = (
     "^(?P<severity>[DIWEF])(?P<month>\d\d)(?P<day>\d\d) "

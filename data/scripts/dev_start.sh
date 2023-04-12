@@ -447,7 +447,7 @@ function main() {
         --hostname "${DEV_INSIDE}" \
         --shm-size "${SHM_SIZE}" \
         -v /dev/null:/dev/raw1394 \
-        -v "${PROJECT_ROOT}":"${PROJECT_NAME}" \
+        -v "${PROJECT_ROOT}":"/${PROJECT_NAME}" \
         "${DEV_IMAGE}" \
         /bin/bash
 

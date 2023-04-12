@@ -16,7 +16,7 @@ from config import (
     PROJECT_NAME,
     SCRIPTS,
     SIM_CONTROL_RELEASE,
-    SIM_CONTROL_RELEASE_NAME
+    SIM_CONTROL_RELEASE_NAME,
 )
 
 
@@ -77,7 +77,7 @@ def install_sim_control_standalone():
     sim_control_release = Path(DOWNLOAD_DIR, "sim_control_standalone.zip")
 
     logger.info(f"Downloading sim control standalone to {sim_control_release}")
-    
+
     download_cmd = f"wget -O {sim_control_release} {SIM_CONTROL_RELEASE}"
     print(download_cmd)
     subprocess.run(download_cmd, shell=True)

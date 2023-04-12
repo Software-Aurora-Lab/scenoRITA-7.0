@@ -1,5 +1,5 @@
 data/*
-out/*
+# out/*
 data/download/*
 !data/download/.gitkeep
 *.pickle
