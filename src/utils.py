@@ -9,7 +9,7 @@ from absl.flags import FLAGS
 from loguru import logger
 from nanoid import generate
 
-from config import LOGGING_FORMAT, OUT_DIR, PROJECT_NAME
+from config import LOGGING_FORMAT, PROJECT_NAME, PROJECT_ROOT
 
 
 def generate_id(size=5):
@@ -22,7 +22,7 @@ def set_up_gflags():
     flags.DEFINE_integer("num_adc", 3, "Number of ADCs to use.")
     flags.DEFINE_boolean("dry_run", os.uname()[0] != "Linux", "Dry run mode.")
     flags.DEFINE_string(
-        "execution_id", datetime.now().strftime("%y%m%d_%H%M%S"), "Execution ID."
+        "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
     )
     flags.DEFINE_boolean("colorize", True, "Colorize log output.")
 
@@ -33,15 +33,17 @@ def set_up_gflags():
     flags.DEFINE_integer("max_obs", 10, "Maximum number of obstacles.")
 
 
-def get_output_dir() -> Path:
-    result = Path(OUT_DIR, f"{FLAGS.execution_id}_{FLAGS.map}")
+def get_output_dir(root: Path = PROJECT_ROOT) -> Path:
+    result = Path(root, "out", f"{FLAGS.execution_id}_{FLAGS.map}")
     if not result.exists():
         result.mkdir(parents=True)
     return result
 
 
 def get_log_file() -> Path:
-    return Path(OUT_DIR, f"{FLAGS.execution_id}_{FLAGS.map}", f"{PROJECT_NAME}.log")
+    return Path(
+        PROJECT_ROOT, "out", f"{FLAGS.execution_id}_{FLAGS.map}", f"{PROJECT_NAME}.log"
+    )
 
 
 def set_up_logging(level: str | int) -> None:

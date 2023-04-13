@@ -1,9 +1,12 @@
+import math
 import random
-from typing import Tuple
+from typing import List, Tuple
 
 import networkx as nx
+from shapely.geometry import Polygon
 
 from apollo.map_service import MapService, PositionEstimate
+from apollo.utils import generate_adc_polygon, generate_polygon
 
 from ..representation import (
     EgoCar,
@@ -86,10 +89,35 @@ class ScenarioGenerator:
             random.uniform(*ObstacleConstraints[obs_type]["height"]),
         )
 
-    def generate_obstacle(self) -> Obstacle:
+    def generate_obstacle(self, ego_car: EgoCar) -> Obstacle:
+        """
+        Generate an obstacle with random properties but avoid
+            being initialized overlapping with the ego car.
+        :param ego_car: The ego car.
+        :return: The generated obstacle.
+        """
         obs_type = self.generate_obstacle_type()
-        initial, final = self.generate_obstacle_route()
         width, length, height = self.generate_obstacle_dimensions(obs_type)
+
+        # Avoid generating obstacles that overlap with the ego car.
+        while True:
+            initial, final = self.generate_obstacle_route()
+            ego_initial = ego_car.initial_position
+
+            ep, et = self.map_service.get_lane_coord_and_heading(
+                ego_initial.lane_id, ego_initial.s
+            )
+            ego_polygon = Polygon(generate_adc_polygon(ep.x, ep.y, 0.0, et))
+
+            obs_x, obs_y = self.generate_obs_reference_path(initial, final)
+            obs_theta = math.atan2(obs_y[1] - obs_y[0], obs_x[1] - obs_x[0])
+
+            obstacle_polygon = Polygon(
+                generate_polygon(obs_x[0], obs_y[0], 0.0, obs_theta, length, width)
+            )
+
+            if not ego_polygon.intersects(obstacle_polygon):
+                break
 
         result = Obstacle(
             id=random.randint(100000, 999999),
@@ -123,7 +151,37 @@ class ScenarioGenerator:
 
     def generate_scenario(self, min_obs: int, max_obs: int) -> Scenario:
         num_obs = random.randint(min_obs, max_obs)
+        ego_car = self.generate_ego_car()
         return Scenario(
-            ego_car=self.generate_ego_car(),
-            obstacles=[self.generate_obstacle() for _ in range(num_obs)],
+            ego_car=ego_car,
+            obstacles=[self.generate_obstacle(ego_car) for _ in range(num_obs)],
         )
+
+    def generate_obs_reference_path(
+        self, initial: ObstaclePosition, final: ObstaclePosition
+    ) -> Tuple[List[float], List[float]]:
+        path = nx.shortest_path(
+            self.map_service.obs_routing_graph, initial.lane_id, final.lane_id
+        )
+
+        x_es = []
+        y_es = []
+
+        for lane_id in path:
+            central_curve = self.map_service.get_lane_central_curve_by_id(lane_id)
+            if lane_id == initial.lane_id:
+                x_es.extend(central_curve.xy[0][initial.index :])
+                y_es.extend(central_curve.xy[1][initial.index :])
+            else:
+                if central_curve.xy[0][0] == x_es[-1]:
+                    # The first point of the central curve is the
+                    # same as the last point of the previous curve.
+                    x_es.extend(central_curve.xy[0][1:])
+                    y_es.extend(central_curve.xy[1][1:])
+                else:
+                    x_es.extend(central_curve.xy[0])
+                    y_es.extend(central_curve.xy[1])
+        return x_es, y_es
+
+    def write_scenario_to_file(self, scenario: Scenario, filename: str) -> None:
+        pass

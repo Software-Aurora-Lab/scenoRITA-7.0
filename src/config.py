@@ -4,7 +4,6 @@ PROJECT_ROOT = Path(__file__).parent.parent
 PROJECT_NAME = "scenoRITA_V3"
 DATA_DIR = Path(PROJECT_ROOT, "data")
 DOWNLOAD_DIR = Path(DATA_DIR, "download")
-OUT_DIR = Path(PROJECT_ROOT, "out")
 
 # Docker Configurations
 DOCKER_CMD = "docker"
