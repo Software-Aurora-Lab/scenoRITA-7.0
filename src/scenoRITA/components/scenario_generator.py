@@ -134,14 +134,14 @@ class ScenarioGenerator:
         return result
 
     def generate_ego_car(self) -> EgoCar:
-        lane_ids = list(self.map_service.routing_graph.nodes())
+        lane_ids = self.map_service.non_junction_lanes
         while True:
             lane_id = random.choice(lane_ids)
             descendants = nx.descendants(self.map_service.routing_graph, lane_id)
             if len(descendants) > 0:
                 target_lane_id = random.choice(list(descendants))
                 return EgoCar(
-                    PositionEstimate(lane_id, 1.0),  # at the end of the lane
+                    PositionEstimate(lane_id, 0.0),  # at the end of the lane
                     PositionEstimate(
                         target_lane_id,
                         float(int(self.map_service.get_lane_by_id(lane_id).length)),

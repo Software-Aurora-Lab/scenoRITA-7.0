@@ -98,6 +98,8 @@ class MapService:
         self.signal_boxes: Dict[BaseGeometry, str] = dict()
         self.stop_sign_boxes: Dict[BaseGeometry, str] = dict()
 
+        self.non_junction_lanes: List[str] = list()
+
         self.routing_graph = nx.DiGraph()
         self.obs_routing_graph = nx.DiGraph()
 
@@ -122,6 +124,7 @@ class MapService:
 
         self.build_lane_segment_kd_tree()
         self.build_routing_graph()
+        self.find_non_junction_lanes()
         # self.build_junction_polygon_kd_tree()
         # self.build_signal_segment_kd_tree()
         # self.build_crosswalk_polygon_kd_tree()
@@ -220,6 +223,22 @@ class MapService:
             for path in self.get_path_from(target, forward_only, limit - 1):
                 result.append([lane_id] + path)
         return result
+
+    def find_non_junction_lanes(self) -> None:
+        result = list()
+        junction_overlap_ids = set()
+        # find all overlap ids that are associated with junctions
+        for junction in self.junction_table:
+            junction_obj = self.junction_table[junction]
+            for oid in junction_obj.overlap_id:
+                junction_overlap_ids.add(oid.id)
+        # find all lanes that are not associated with junctions
+        for lane_id in self.lane_table:
+            lane_obj = self.lane_table[lane_id]
+            lane_overlap_ids = set([x.id for x in lane_obj.overlap_id])
+            if lane_overlap_ids & junction_overlap_ids == set():
+                result.append(lane_id)
+        self.non_junction_lanes = result
 
     def build_routing_graph(self):
         # modules/routing/topo_creator/graph_creator.cc
