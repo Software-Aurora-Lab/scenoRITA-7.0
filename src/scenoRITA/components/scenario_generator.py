@@ -184,4 +184,5 @@ class ScenarioGenerator:
         return x_es, y_es
 
     def write_scenario_to_file(self, scenario: Scenario, filename: str) -> None:
+        # TODO: Write to CyberRT format.
         pass

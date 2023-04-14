@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, List, Tuple
 
 
@@ -8,7 +9,13 @@ class Violation:
     features: Dict[str, float]
 
 
-def grade_scenario(
-    scenario_id: str,
-) -> Tuple[Dict[str, Tuple[float, ...]], List[Violation]]:
-    return dict(), list()
+@dataclass(slots=True)
+class GradingResult:
+    scenario_id: str
+    fitnesses: Dict[int, Tuple[float, ...]]
+    violations: List[Violation]
+
+
+def grade_scenario(scenario_id: str, scenario: Path) -> GradingResult:
+    # TODO: Implement this function.
+    raise NotImplementedError()
