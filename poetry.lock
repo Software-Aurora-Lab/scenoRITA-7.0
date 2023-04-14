@@ -477,6 +477,26 @@ files = [
 ]
 
 [[package]]
+name = "kneed"
+version = "0.8.2"
+description = "Knee-point detection in Python"
+category = "main"
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "kneed-0.8.2-py3-none-any.whl", hash = "sha256:4f483acdefa0b0e2b2ca91bfa9568a8f67a2b6f6250ec4b96241c92c9589ef79"},
+    {file = "kneed-0.8.2.tar.gz", hash = "sha256:cbbd34e284f049cafa63f803cd3af0aff113d5347fb398942a74bff07ce6cc62"},
+]
+
+[package.dependencies]
+numpy = ">=1.14.2"
+scipy = ">=1.0.0"
+
+[package.extras]
+plot = ["matplotlib (>=2.2.5)"]
+testing = ["matplotlib (>=2.2.5)", "pytest (>=5.0.1)", "pytest-cov (>=3.0.0)"]
+
+[[package]]
 name = "loguru"
 version = "0.7.0"
 description = "Python logging made (stupidly) simple"
@@ -1204,4 +1224,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.11,<3.12"
-content-hash = "27d4694c1c982eb2d00f51855d17d1c476859ddd5deb9ed613e2fefd64051d36"
+content-hash = "b90c1061ae73faa37c3f683a429733d231f0be6479b90c068abd5f9fe420f83f"
