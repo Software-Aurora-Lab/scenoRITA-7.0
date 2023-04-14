@@ -20,7 +20,7 @@ from modules.common_msgs.map_msgs.map_overlap_pb2 import Overlap
 from modules.common_msgs.map_msgs.map_pb2 import Map
 from modules.common_msgs.map_msgs.map_signal_pb2 import Signal
 from modules.common_msgs.map_msgs.map_stop_sign_pb2 import StopSign
-from mylib.kdtree import KDTree as MyKDTree
+from mylib.kdtree import KDTree, KDTreeParams
 
 __loaded_instances = dict()
 
