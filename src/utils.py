@@ -19,7 +19,7 @@ def generate_id(size=5):
 def set_up_gflags():
     # Execution flags
     flags.DEFINE_string("map", "borregas_ave", "Name of the map to use.")
-    flags.DEFINE_integer("num_adc", 3, "Number of ADCs to use.")
+    flags.DEFINE_integer("num_adc", 5, "Number of ADCs to use.")
     flags.DEFINE_boolean("dry_run", os.uname()[0] != "Linux", "Dry run mode.")
     flags.DEFINE_string(
         "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
