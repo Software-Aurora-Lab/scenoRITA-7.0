@@ -55,7 +55,8 @@ def compile_apollo():
     ctn = ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_installer")
     logger.info("Compiling Apollo")
     ctn.start_container(start_script=SCRIPTS.DEV_START, verbose=True)
-    modules = [
+    apollo_modules = list(x.name for x in APOLLO_ROOT.glob("modules/*"))
+    needed_modules = {
         "dreamview",
         "planning",
         "prediction",
@@ -63,9 +64,10 @@ def compile_apollo():
         "cyber",
         "map",
         "common",
-        "common_msgs",
         "monitor",
-    ]
+        "common_msgs",
+    }
+    modules = list(needed_modules.intersection(apollo_modules))
     ctn.exec(f"bash apollo.sh build {' '.join(modules)}", verbose=True)
 
 
