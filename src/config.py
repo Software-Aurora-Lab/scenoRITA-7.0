@@ -25,7 +25,7 @@ SUPPORTED_MAPS = list(x.name for x in MAPS_DIR.iterdir() if x.is_dir())
 
 # Script Configurations
 class SCRIPTS:
-    SCRIPTS_DIR = Path(PROJECT_ROOT, "scripts")
+    SCRIPTS_DIR = Path(DATA_DIR, "scripts")
     DEV_START = Path(SCRIPTS_DIR, "dev_start.sh")
     MULTI_CTN_DEV_START = Path(SCRIPTS_DIR, "multi_ctn_dev_start.sh")
 
