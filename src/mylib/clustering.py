@@ -10,7 +10,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 def cluster(filename: Path) -> np.ndarray:
     df = pd.read_csv(filename)
-    data = df.iloc[:, 1:]
+    data = df.iloc[:, 1:]  # remove the first column
     data_scaled = MinMaxScaler().fit_transform(data)
     knn = NearestNeighbors(n_neighbors=2)
     neighbors = knn.fit(data_scaled)
@@ -27,12 +27,21 @@ def cluster(filename: Path) -> np.ndarray:
     est = DBSCAN(eps=epsilon, min_samples=1, metric="cityblock")
     clusters = est.fit_predict(data_scaled)
 
-    # df['cluster'] = clusters
-    # df.sort_values('cluster', inplace=True)
+    df["cluster"] = clusters
+    df.sort_values("cluster", inplace=True)
+    print(df)
 
     return clusters
 
 
 if __name__ == "__main__":
     filename = Path("/Users/yuqihuai/Downloads/_UnsafeLaneChange.csv")
-    print(cluster(filename))
+    clusters = cluster(filename)
+
+    num_violations = len(clusters)
+    num_clusters = len(np.unique(clusters))
+
+    print(f"Number of violations: {num_violations}")
+    print(f"Number of clusters: {num_clusters}")
+    eliminated = num_violations - num_clusters
+    print(f"Elimination ratio: {eliminated / num_violations * 100:.2f}%")
