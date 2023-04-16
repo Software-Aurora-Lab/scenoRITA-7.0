@@ -149,10 +149,14 @@ class ScenarioGenerator:
                 )
             lane_ids.remove(lane_id)
 
-    def generate_scenario(self, min_obs: int, max_obs: int) -> Scenario:
+    def generate_scenario(
+        self, gen_id: int, sce_id: int, min_obs: int, max_obs: int
+    ) -> Scenario:
         num_obs = random.randint(min_obs, max_obs)
         ego_car = self.generate_ego_car()
         return Scenario(
+            generation_id=gen_id,
+            scenario_id=sce_id,
             ego_car=ego_car,
             obstacles=[self.generate_obstacle(ego_car) for _ in range(num_obs)],
         )

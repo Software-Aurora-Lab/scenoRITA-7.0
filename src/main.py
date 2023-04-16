@@ -1,4 +1,5 @@
 from time import perf_counter
+from typing import List
 
 from absl import app
 from absl.flags import FLAGS
@@ -13,9 +14,21 @@ from scenoRITA.operators import GeneticOperators
 from utils import generate_id, set_up_gflags, set_up_logging
 
 
+def start_containers(num_adc: int) -> List[ApolloContainer]:
+    containers = [
+        ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_{generate_id()}")
+        for _ in range(num_adc)
+    ]
+    for ctn in containers:
+        if not FLAGS.dry_run:
+            ctn.start_container()
+            logger.info(f"{ctn.container_name} @ {ctn.container_ip()}")
+    return containers
+
+
 def main(argv):
     del argv
-    set_up_logging("INFO")
+    set_up_logging(FLAGS.log_level)
     logger.info("Execution ID: " + FLAGS.execution_id)
     logger.info("Map: " + FLAGS.map)
     logger.info("Number of ADSes: " + str(FLAGS.num_adc))
@@ -27,15 +40,7 @@ def main(argv):
 
     # start up Apollo containers
     logger.info("Starting up Apollo containers")
-    containers = [
-        ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_{generate_id()}")
-        for _ in range(FLAGS.num_adc)
-    ]
-    for ctn in containers:
-        logger.info(f"Starting container {ctn.container_name}")
-        if not FLAGS.dry_run:
-            ctn.start_container()
-            ctn.start_dreamview()
+    containers = start_containers(FLAGS.num_adc)
 
     # loading map service
     logger.info(f"Loading map service for {FLAGS.map}")
@@ -43,21 +48,35 @@ def main(argv):
 
     # genetic algorithm main loop
     scenario_generator = ScenarioGenerator(map_service)
-    genetic_operators = GeneticOperators(map_service)
+    genetic_operators = GeneticOperators(map_service, FLAGS.dry_run)
 
     ga_start_time = perf_counter()
     expected_end_time = ga_start_time + FLAGS.num_hour * 3600
-    scenarios = [scenario_generator.generate_scenario(FLAGS.min_obs, FLAGS.max_obs)]
-    genetic_operators.evaluate_scenarios(scenarios)
+
+    scenarios = [
+        scenario_generator.generate_scenario(0, x, FLAGS.min_obs, FLAGS.max_obs)
+        for x in range(FLAGS.num_scenario)
+    ]
+    genetic_operators.evaluate_scenarios(containers, scenarios)
+
+    for sce in scenarios:
+        logger.debug(f"{len(sce.obstacles)} obstacles in {sce.get_id()})")
+        for obs in sce.obstacles:
+            logger.debug(obs.fitness)
 
     generation_counter = 1
     while perf_counter() < expected_end_time:
         logger.info(f"Generation {generation_counter}")
         offsprings = genetic_operators.get_offsprings(scenarios)
-        genetic_operators.evaluate_scenarios(offsprings)
+        for sce in offsprings:
+            logger.debug(
+                f"Offspring {sce.get_id()} has {len(sce.obstacles)} obstacles."
+            )
+        genetic_operators.evaluate_scenarios(containers, offsprings)
+        scenarios = genetic_operators.select(scenarios, offsprings)
         generation_counter += 1
 
-        if FLAGS.dry_run:
+        if FLAGS.dry_run and generation_counter == 5:
             break
 
 

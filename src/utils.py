@@ -25,6 +25,7 @@ def set_up_gflags():
         "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
     )
     flags.DEFINE_boolean("colorize", True, "Colorize log output.")
+    flags.DEFINE_string("log_level", "DEBUG", "Log level.")
 
     # Genetic algorithm flags
     flags.DEFINE_integer("num_scenario", 50, "Number of scenarios to generate.")

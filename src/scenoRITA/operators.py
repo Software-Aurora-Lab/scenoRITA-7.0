@@ -2,20 +2,34 @@ import random
 from copy import deepcopy
 from typing import List
 
+from apollo.container import ApolloContainer
 from apollo.map_service import MapService
 
 from .components.scenario_generator import ObstacleConstraints, ScenarioGenerator
-from .representation import Obstacle, Scenario
+from .representation import Obstacle, ObstacleFitness, Scenario
 
 
 class GeneticOperators:
-    def __init__(self, map_service: MapService) -> None:
+    def __init__(self, map_service: MapService, dry_run: bool) -> None:
         self.map_service = map_service
         self.generator = ScenarioGenerator(map_service)
+        self.dry_run = dry_run
 
-    def get_offspring(self, scenario: Scenario) -> Scenario:
+    def get_offsprings(self, scenarios: List[Scenario]) -> List[Scenario]:
         # TODO: implement offspring generation
-        result = deepcopy(scenario)
+        result: List[Scenario] = list()
+        for scenario in scenarios:
+            obstacle_parents = [deepcopy(x) for x in scenario.obstacles]
+            for obs in obstacle_parents:
+                del obs.fitness.values
+            result.append(
+                Scenario(
+                    generation_id=scenario.generation_id + 1,
+                    scenario_id=scenario.scenario_id,
+                    ego_car=scenario.ego_car,
+                    obstacles=obstacle_parents,
+                )
+            )
         return result
 
     def _validate_obstacle(self, obstacle: Obstacle) -> None:
@@ -90,17 +104,30 @@ class GeneticOperators:
 
         self._validate_obstacle(obstacle)
 
-    def select(self, obstacles: List[Obstacle]) -> List[Obstacle]:
+    def select(
+        self, prev_scenarios: List[Scenario], curr_scenarios: List[Scenario]
+    ) -> List[Scenario]:
         """
         Selects a subset of obstacles from a population.
-        :param obstacles: A population of obstacles.
-        :return: Selected obstacles.
+        :param prev_scenarios: Previous sub-populations.
+        :param curr_scenarios: Current sub-populations.
+        :return: Sub-populations for next generation.
         """
-        return obstacles
+        return curr_scenarios
 
-    def evaluate_scenarios(self, scenarios: List[Scenario]) -> List[float]:
+    def evaluate_scenarios(
+        self, containers: List[ApolloContainer], scenarios: List[Scenario]
+    ) -> None:
         # TODO: implement scenario evaluation
         """
-        Evaluates a list of scenarios, assigning a fitness value to each.
+        Evaluates a list of scenarios, assigning a fitness value to each scenario.
+            Mutates the scenarios in place.
+        :param containers: Apollo containers.
+        :param scenarios: Scenarios to evaluate.
         """
-        return [0.0 for _ in scenarios]
+        if self.dry_run:
+            for scenario in scenarios:
+                for obs in scenario.obstacles:
+                    obs.fitness.values = tuple(
+                        random.random() for _ in range(len(ObstacleFitness.weights))
+                    )

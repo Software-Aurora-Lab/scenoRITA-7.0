@@ -57,5 +57,10 @@ class EgoCar:
 
 @dataclass(slots=True)
 class Scenario:
+    generation_id: int
+    scenario_id: int
     ego_car: EgoCar
     obstacles: list[Obstacle]
+
+    def get_id(self) -> str:
+        return f"gen_{self.generation_id}_sce_{self.scenario_id}"
