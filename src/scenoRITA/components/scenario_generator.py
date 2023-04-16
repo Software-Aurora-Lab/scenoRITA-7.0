@@ -1,12 +1,28 @@
 import math
 import random
+import time
+from pathlib import Path
 from typing import List, Tuple
 
 import networkx as nx
+from cyber_record.record import Record
 from shapely.geometry import Polygon
 
 from apollo.map_service import MapService, PositionEstimate
 from apollo.utils import generate_adc_polygon, generate_polygon
+from config import PROJECT_NAME
+from modules.common_msgs.basic_msgs.geometry_pb2 import Point3D, PointENU
+from modules.common_msgs.basic_msgs.header_pb2 import Header
+from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
+    PerceptionObstacle,
+    PerceptionObstacles,
+)
+from modules.common_msgs.perception_msgs.traffic_light_detection_pb2 import (
+    TrafficLight,
+    TrafficLightDetection,
+)
+from modules.common_msgs.routing_msgs.routing_pb2 import LaneWaypoint, RoutingRequest
+from mylib import cubic_spline_planner, stanley_controller
 
 from ..representation import (
     EgoCar,
@@ -167,10 +183,8 @@ class ScenarioGenerator:
         path = nx.shortest_path(
             self.map_service.obs_routing_graph, initial.lane_id, final.lane_id
         )
-
         x_es = []
         y_es = []
-
         for lane_id in path:
             central_curve = self.map_service.get_lane_central_curve_by_id(lane_id)
             if lane_id == initial.lane_id:
@@ -187,6 +201,221 @@ class ScenarioGenerator:
                     y_es.extend(central_curve.xy[1])
         return x_es, y_es
 
-    def write_scenario_to_file(self, scenario: Scenario, filename: str) -> None:
-        # TODO: Write to CyberRT format.
-        pass
+    def generate_routing_msg(
+        self, ego_car: EgoCar, reference_time: float
+    ) -> RoutingRequest:
+        coord, heading = self.map_service.get_lane_coord_and_heading(
+            ego_car.initial_position.lane_id, ego_car.initial_position.s
+        )
+        routing_after = 2.0  # seconds
+        routing_request = RoutingRequest(
+            header=Header(
+                timestamp_sec=reference_time + routing_after,
+                module_name=PROJECT_NAME,
+                sequence_num=0,
+            ),
+            waypoint=[
+                LaneWaypoint(
+                    pose=PointENU(x=coord.x, y=coord.y, z=0.0),
+                    heading=heading,
+                ),
+                LaneWaypoint(
+                    id=ego_car.final_position.lane_id, s=ego_car.final_position.s
+                ),
+            ],
+        )
+        return routing_request
+
+    def generate_traffic_light_detection_msgs(
+        self, scenario_length: int, frequency: int, reference_time: float
+    ) -> List[TrafficLightDetection]:
+        result: List[TrafficLightDetection] = list()
+        dt = 1.0 / frequency
+        current_time = 0.0
+        sequence_num = 0
+        while current_time < scenario_length:
+            traffic_light_detection = TrafficLightDetection(
+                header=Header(
+                    timestamp_sec=reference_time + current_time,
+                    module_name=PROJECT_NAME,
+                    sequence_num=sequence_num,
+                )
+            )
+            for signal_id in self.map_service.signal_table.keys():
+                detection = traffic_light_detection.traffic_light.add()
+                detection.id = signal_id
+                detection.color = TrafficLight.GREEN
+                detection.confidence = 1.0
+            result.append(traffic_light_detection)
+            current_time += dt
+            sequence_num += 1
+        return result
+
+    def generate_perception_obstacle(
+        self,
+        obstacle: Obstacle,
+        scenario_length: int,
+        frequency: int,
+        reference_time: float,
+    ) -> List[PerceptionObstacle]:
+        rx, ry = self.generate_obs_reference_path(
+            obstacle.initial_position, obstacle.final_position
+        )
+        cx, cy, cyaw, _, _ = cubic_spline_planner.calc_spline_course(rx, ry, ds=0.5)
+
+        state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
+        last_idx = len(cx) - 1
+
+        x = [state.x]
+        y = [state.y]
+        yaw = [state.yaw]
+        v = [state.v]
+        t = [0.0]
+        if obstacle.motion == ObstacleMotion.DYNAMIC:
+            target_speed = [obstacle.speed for _ in range(len(cx))]
+            for i in range(len(target_speed)):
+                if cyaw[i] > 0.01:
+                    target_speed[i] = min(target_speed[i], 5.0)
+        else:
+            target_speed = [0.0 for _ in range(len(cx))]
+        L = obstacle.length
+        target_idx, _ = stanley_controller.calc_target_index(state, cx, cy, L)
+        dt = 1.0 / frequency
+        current_time = 0.0
+
+        # while current_time < scenario_length and last_idx > target_idx:
+        for i in range(int(scenario_length * frequency)):
+            di, target_idx = stanley_controller.stanley_control(
+                state, cx, cy, cyaw, target_idx, L
+            )
+            if target_idx == last_idx:
+                # reached to goal, stop
+                current_time += dt
+                x.append(x[-1])
+                y.append(y[-1])
+                yaw.append(yaw[-1])
+                v.append(0.0)
+                t.append(current_time)
+            else:
+                # have not reached to goal, keep going
+                ai = stanley_controller.pid_control(target_speed[target_idx], state.v)
+                state.update(ai, di, L, dt)
+                current_time += dt
+
+                x.append(state.x)
+                y.append(state.y)
+                yaw.append(state.yaw)
+                v.append(state.v)
+                t.append(current_time)
+
+        obstacle_messages: List[PerceptionObstacle] = list()
+        for i in range(len(x)):
+            _velocity = Point3D(
+                x=math.cos(yaw[i]) * v[i], y=math.sin(yaw[i]) * v[i], z=0.0
+            )
+            delta_v = v[i] - v[i - 1] if i > 0 else 0.0
+            delta_t = t[i] - t[i - 1] if i > 0 else 0.0
+            if delta_t == 0.0:
+                _acceleration = Point3D(x=0, y=0, z=0)
+            else:
+                _acceleration = Point3D(
+                    x=math.cos(yaw[i]) * delta_v / delta_t,
+                    y=math.sin(yaw[i]) * delta_v / delta_t,
+                    z=0.0,
+                )
+            polygon_points = [
+                Point3D(x=p[0], y=p[1], z=0.0)
+                for p in generate_polygon(
+                    x[i], y[i], 0.0, yaw[i], obstacle.length, obstacle.width
+                )
+            ]
+            obstacle_messages.append(
+                PerceptionObstacle(
+                    id=obstacle.id,
+                    position=Point3D(x=x[i], y=y[i], z=0.0),
+                    theta=yaw[i],
+                    length=obstacle.length,
+                    width=obstacle.width,
+                    height=obstacle.height,
+                    velocity=_velocity,
+                    acceleration=_acceleration,
+                    type=PerceptionObstacle.VEHICLE,
+                    timestamp=reference_time + t[i],
+                    tracking_time=1.0,
+                    polygon_point=polygon_points,
+                )
+            )
+        return obstacle_messages
+
+    def generate_perception_obstacles_msgs(
+        self,
+        obstacles: List[Obstacle],
+        scenario_length: int,
+        frequency: int,
+        reference_time: float,
+    ) -> List[PerceptionObstacles]:
+        obstacle_messages: List[List[PerceptionObstacle]] = list()
+        for obs in obstacles:
+            obstacle_messages.append(
+                self.generate_perception_obstacle(
+                    obs, scenario_length, frequency, reference_time
+                )
+            )
+
+        msg_length = len(obstacle_messages[0])
+        result = list()
+        for i in range(msg_length):
+            new_msg = PerceptionObstacles(
+                header=Header(
+                    timestamp_sec=obstacle_messages[0][i].timestamp,
+                    module_name=PROJECT_NAME,
+                    sequence_num=i,
+                ),
+                perception_obstacle=[p[i] for p in obstacle_messages],
+            )
+            result.append(new_msg)
+        return result
+
+    def write_scenario_to_file(
+        self,
+        scenario: Scenario,
+        filename: Path,
+        scenario_length: int,
+        perception_frequency: int,
+    ) -> Path:
+        current_time = time.time()
+        routing_message = self.generate_routing_msg(scenario.ego_car, current_time)
+        traffic_light_messages = self.generate_traffic_light_detection_msgs(
+            scenario_length, 1, current_time
+        )
+        perception_messages = self.generate_perception_obstacles_msgs(
+            scenario.obstacles, scenario_length, perception_frequency, current_time
+        )
+
+        all_msgs = [routing_message] + traffic_light_messages + perception_messages
+        all_msgs.sort(key=lambda x: x.header.timestamp_sec)
+
+        with Record(filename, mode="w") as record:
+            for msg in all_msgs:
+                if isinstance(msg, RoutingRequest):
+                    record.write(
+                        "/apollo/routing_request",
+                        msg,
+                        int(msg.header.timestamp_sec * 1e9),
+                    )
+                elif isinstance(msg, TrafficLightDetection):
+                    record.write(
+                        "/apollo/perception/traffic_light",
+                        msg,
+                        int(msg.header.timestamp_sec * 1e9),
+                    )
+                elif isinstance(msg, PerceptionObstacles):
+                    record.write(
+                        "/apollo/perception/obstacles",
+                        msg,
+                        int(msg.header.timestamp_sec * 1e9),
+                    )
+                else:
+                    raise Exception
+
+        return filename

@@ -24,6 +24,7 @@ def set_up_gflags():
     flags.DEFINE_string(
         "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
     )
+    flags.DEFINE_integer("perception_frequency", 10, "Perception frequency.")
     flags.DEFINE_integer("scenario_length", 30, "Length of the scenario in seconds.")
     flags.DEFINE_boolean("colorize", True, "Colorize log output.")
     flags.DEFINE_string("log_level", "DEBUG", "Log level.")

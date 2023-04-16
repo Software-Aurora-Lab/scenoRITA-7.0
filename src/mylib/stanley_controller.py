@@ -67,7 +67,7 @@ def pid_control(target, current):
     return Kp * (target - current)
 
 
-def stanley_control(state, cx, cy, cyaw, last_target_idx):
+def stanley_control(state, cx, cy, cyaw, last_target_idx, L):
     """
     Stanley steering control.
 
@@ -76,9 +76,10 @@ def stanley_control(state, cx, cy, cyaw, last_target_idx):
     :param cy: ([float])
     :param cyaw: ([float])
     :param last_target_idx: (int)
+    :param L: (float) Wheel base of vehicle
     :return: (float, int)
     """
-    current_target_idx, error_front_axle = calc_target_index(state, cx, cy)
+    current_target_idx, error_front_axle = calc_target_index(state, cx, cy, L)
 
     if last_target_idx >= current_target_idx:
         current_target_idx = last_target_idx
