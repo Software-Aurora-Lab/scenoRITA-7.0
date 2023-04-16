@@ -1,35 +1,119 @@
 import random
 from copy import deepcopy
-from typing import List
+from typing import List, Set
+
+from deap.tools import selNSGA2
+from shapely.geometry import Point
 
 from apollo.container import ApolloContainer
 from apollo.map_service import MapService
 
 from .components.scenario_generator import ObstacleConstraints, ScenarioGenerator
-from .representation import Obstacle, ObstacleFitness, Scenario
+from .representation import Obstacle, ObstacleFitness, ObstacleMotion, Scenario
 
 
 class GeneticOperators:
-    def __init__(self, map_service: MapService, dry_run: bool) -> None:
+    def __init__(
+        self,
+        map_service: MapService,
+        mut_pb: float,
+        cx_pb: float,
+        add_pb: float,
+        del_pb: float,
+        replace_pb: float,
+        min_obs: int,
+        max_obs: int,
+        dry_run: bool,
+    ) -> None:
         self.map_service = map_service
         self.generator = ScenarioGenerator(map_service)
+        self.mut_pb = mut_pb
+        self.cx_pb = cx_pb
+        self.add_pb = add_pb
+        self.del_pb = del_pb
+        self.replace_pb = replace_pb
+        self.min_obs = min_obs
+        self.max_obs = max_obs
         self.dry_run = dry_run
 
     def get_offsprings(self, scenarios: List[Scenario]) -> List[Scenario]:
-        # TODO: implement offspring generation
         result: List[Scenario] = list()
         for scenario in scenarios:
-            obstacle_parents = [deepcopy(x) for x in scenario.obstacles]
-            for obs in obstacle_parents:
+            next_generation_id = scenario.generation_id + 1
+            scenario_id = scenario.scenario_id
+            ego = deepcopy(scenario.ego_car)
+            obstacles = [deepcopy(x) for x in scenario.obstacles]
+            for obs in obstacles:
                 del obs.fitness.values
-            result.append(
-                Scenario(
-                    generation_id=scenario.generation_id + 1,
-                    scenario_id=scenario.scenario_id,
-                    ego_car=scenario.ego_car,
-                    obstacles=obstacle_parents,
+
+            if random.random() < self.replace_pb:
+                # replace ego car
+                ego = self.generator.generate_ego_car()
+            else:
+                # apply crossover to obstacles
+                for o1, o2 in zip(obstacles[::2], obstacles[1::2]):
+                    if random.random() < self.cx_pb:
+                        self.crossover(o1, o2)
+                # apply mutation to obstacles
+                for mutant in obstacles:
+                    if random.random() < self.mut_pb:
+                        self.mutate(mutant)
+                # add obstacles
+                if len(obstacles) > self.min_obs and random.random() < self.del_pb:
+                    del obstacles[random.randint(0, len(obstacles) - 1)]
+                if len(obstacles) < self.max_obs and random.random() < self.add_pb:
+                    obstacles.append(self.generator.generate_obstacle(ego))
+
+            # validate scenario
+            obs_size = len(obstacles)
+            obs_routes: Set[str] = set()
+            obs_static: Set[str] = set()
+            for obs in list(obstacles):
+                # validate obstacles starting from ego car's lane
+                if obs.initial_position.lane_id == ego.initial_position.lane_id:
+                    ego_point, _ = self.map_service.get_lane_coord_and_heading(
+                        ego.initial_position.lane_id, ego.initial_position.s
+                    )
+                    obs_lane = obs.initial_position.lane_id
+                    obs_index = obs.initial_position.index
+                    obs_xes, obs_yes = self.map_service.get_lane_central_curve_by_id(
+                        obs_lane
+                    ).xy
+                    obs_point = Point(obs_xes[obs_index], obs_yes[obs_index])
+
+                    if ego_point.distance(obs_point) < 15:
+                        # obstacle's initial position is too close to the ego car
+                        obstacles.remove(obs)
+                        continue
+
+                # validate obstacles that share same lane
+                obs_route = (
+                    f"{obs.initial_position.lane_id}-{obs.initial_position.index}-"
+                    f"{obs.final_position.lane_id}-{obs.final_position.index}"
                 )
-            )
+                obs_initial = (
+                    f"{obs.initial_position.lane_id}-{obs.initial_position.index}"
+                )
+                if obs.motion == ObstacleMotion.STATIC and obs_initial in obs_static:
+                    if obs_initial in obs_static:
+                        # obstacle's initial position overlaps
+                        #   with another static obstacle
+                        obstacles.remove(obs)
+                    else:
+                        obs_static.add(obs_initial)
+                elif obs.motion == ObstacleMotion.DYNAMIC:
+                    if obs_route in obs_routes:
+                        # obstacle's route overlaps with another obstacle
+                        obstacles.remove(obs)
+                    else:
+                        obs_routes.add(obs_route)
+
+            # generate new obstacles if necessary
+            while len(obstacles) < obs_size:
+                obstacles.append(self.generator.generate_obstacle(ego))
+
+            result.append(Scenario(next_generation_id, scenario_id, ego, obstacles))
+
         return result
 
     def _validate_obstacle(self, obstacle: Obstacle) -> None:
@@ -108,20 +192,36 @@ class GeneticOperators:
         self, prev_scenarios: List[Scenario], curr_scenarios: List[Scenario]
     ) -> List[Scenario]:
         """
-        Selects a subset of obstacles from a population.
-        :param prev_scenarios: Previous sub-populations.
-        :param curr_scenarios: Current sub-populations.
-        :return: Sub-populations for next generation.
+        For each scenario, select the best obstacles from the previous and current.
+        :param prev_scenarios: Previous scenarios.
+        :param curr_scenarios: Current scenarios.
+        :return: scenarios for next generation.
         """
-        return curr_scenarios
+        result: List[Scenario] = list()
+        for prev, curr in zip(prev_scenarios, curr_scenarios):
+            if prev.ego_car == curr.ego_car:
+                # select obstacles
+                result.append(
+                    Scenario(
+                        generation_id=curr.generation_id,
+                        scenario_id=curr.scenario_id,
+                        ego_car=curr.ego_car,
+                        obstacles=selNSGA2(
+                            prev.obstacles + curr.obstacles, len(curr.obstacles), "log"
+                        ),
+                    )
+                )
+            else:
+                # ego car changed, no selection
+                result.append(curr)
+        return result
 
-    def evaluate_scenarios(
+    def evaluate(
         self, containers: List[ApolloContainer], scenarios: List[Scenario]
     ) -> None:
-        # TODO: implement scenario evaluation
         """
-        Evaluates a list of scenarios, assigning a fitness value to each scenario.
-            Mutates the scenarios in place.
+        Uses Apollo containers to evaluate the scenarios.
+            Mutates the fitness of obstacles in each scenario.
         :param containers: Apollo containers.
         :param scenarios: Scenarios to evaluate.
         """
@@ -131,3 +231,6 @@ class GeneticOperators:
                     obs.fitness.values = tuple(
                         random.random() for _ in range(len(ObstacleFitness.weights))
                     )
+            return
+
+        # TODO: implement scenario evaluation

@@ -48,7 +48,17 @@ def main(argv):
 
     # genetic algorithm main loop
     scenario_generator = ScenarioGenerator(map_service)
-    genetic_operators = GeneticOperators(map_service, FLAGS.dry_run)
+    genetic_operators = GeneticOperators(
+        map_service,
+        FLAGS.mut_pb,
+        FLAGS.cx_pb,
+        FLAGS.add_pb,
+        FLAGS.del_pb,
+        FLAGS.replace_pb,
+        FLAGS.min_obs,
+        FLAGS.max_obs,
+        FLAGS.dry_run,
+    )
 
     ga_start_time = perf_counter()
     expected_end_time = ga_start_time + FLAGS.num_hour * 3600
@@ -57,12 +67,7 @@ def main(argv):
         scenario_generator.generate_scenario(0, x, FLAGS.min_obs, FLAGS.max_obs)
         for x in range(FLAGS.num_scenario)
     ]
-    genetic_operators.evaluate_scenarios(containers, scenarios)
-
-    for sce in scenarios:
-        logger.debug(f"{len(sce.obstacles)} obstacles in {sce.get_id()})")
-        for obs in sce.obstacles:
-            logger.debug(obs.fitness)
+    genetic_operators.evaluate(containers, scenarios)
 
     generation_counter = 1
     while perf_counter() < expected_end_time:
@@ -72,7 +77,7 @@ def main(argv):
             logger.debug(
                 f"Offspring {sce.get_id()} has {len(sce.obstacles)} obstacles."
             )
-        genetic_operators.evaluate_scenarios(containers, offsprings)
+        genetic_operators.evaluate(containers, offsprings)
         scenarios = genetic_operators.select(scenarios, offsprings)
         generation_counter += 1
 

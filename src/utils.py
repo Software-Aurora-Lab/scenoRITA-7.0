@@ -28,10 +28,16 @@ def set_up_gflags():
     flags.DEFINE_string("log_level", "DEBUG", "Log level.")
 
     # Genetic algorithm flags
-    flags.DEFINE_integer("num_scenario", 50, "Number of scenarios to generate.")
+    flags.DEFINE_integer("num_scenario", 10, "Number of scenarios to generate.")
     flags.DEFINE_integer("num_hour", 12, "Number of hours to generate scenarios for.")
-    flags.DEFINE_integer("min_obs", 3, "Minimum number of obstacles.")
-    flags.DEFINE_integer("max_obs", 10, "Maximum number of obstacles.")
+    flags.DEFINE_integer("min_obs", 5, "Minimum number of obstacles.")
+    flags.DEFINE_integer("max_obs", 15, "Maximum number of obstacles.")
+
+    flags.DEFINE_float("mut_pb", 0.2, "Probability of mutation.")
+    flags.DEFINE_float("cx_pb", 0.8, "Probability of crossover.")
+    flags.DEFINE_float("add_pb", 0.1, "Probability of adding an obstacle.")
+    flags.DEFINE_float("del_pb", 0.1, "Probability of deleting an obstacle.")
+    flags.DEFINE_float("replace_pb", 0.1, "Probability of replacing the ego car.")
 
 
 def get_output_dir(root: Path = PROJECT_ROOT) -> Path:
