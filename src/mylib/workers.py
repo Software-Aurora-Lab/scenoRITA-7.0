@@ -16,6 +16,7 @@ def generator_worker(
     generator: ScenarioGenerator,
     _logger: Logger,
     scenario_length: int,
+    perception_frequency: int,
     task_queue: "mp.Queue[Optional[Scenario]]",
     result_queue: mp.Queue,
     target_dir: Path,
@@ -34,7 +35,9 @@ def generator_worker(
                 fp.write("dry run")
         else:
             # TODO: generate scenario
-            pass
+            generator.write_scenario_to_file(
+                scenario, target_file, scenario_length, perception_frequency
+            )
 
         _logger.info(f"{scenario.get_id()}: generate end")
         result_queue.put(scenario)

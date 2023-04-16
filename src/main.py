@@ -40,6 +40,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                     ScenarioGenerator(load_map_service(FLAGS.map)),
                     logger,
                     FLAGS.scenario_length,
+                    FLAGS.perception_frequency,
                     pending_queue,
                     play_queue,
                     get_output_dir(),
