@@ -69,7 +69,9 @@ def player_worker(
             container.stop_ads_modules()
             container.stop_sim_control()
             ego_initial = scenario.ego_car.initial_position
-            ep, et = map_service.get_lane_coord_and_heading(ego_initial.lane_id, ego_initial.s)
+            ep, et = map_service.get_lane_coord_and_heading(
+                ego_initial.lane_id, ego_initial.s
+            )
             container.start_sim_control(ep.x, ep.y, et)
             container.start_ads_modules()
             container.start_recorder(str(in_docker_output))
