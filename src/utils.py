@@ -40,9 +40,9 @@ def set_up_gflags():
     flags.DEFINE_float("replace_pb", 0.1, "Probability of replacing the ego car.")
 
 
-def get_output_dir(root: Path = PROJECT_ROOT) -> Path:
+def get_output_dir(root: Path = PROJECT_ROOT, mkdir: bool = True) -> Path:
     result = Path(root, "out", f"{FLAGS.execution_id}_{FLAGS.map}")
-    if not result.exists():
+    if not result.exists() and mkdir:
         result.mkdir(parents=True)
     return result
 

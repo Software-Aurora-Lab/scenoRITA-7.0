@@ -5,11 +5,10 @@ from typing import List, Set
 from deap.tools import selNSGA2
 from shapely.geometry import Point
 
-from apollo.container import ApolloContainer
 from apollo.map_service import MapService
 
 from .components.scenario_generator import ObstacleConstraints, ScenarioGenerator
-from .representation import Obstacle, ObstacleFitness, ObstacleMotion, Scenario
+from .representation import Obstacle, ObstacleMotion, Scenario
 
 
 class GeneticOperators:
@@ -69,22 +68,21 @@ class GeneticOperators:
             obs_routes: Set[str] = set()
             obs_static: Set[str] = set()
             for obs in list(obstacles):
-                # validate obstacles starting from ego car's lane
-                if obs.initial_position.lane_id == ego.initial_position.lane_id:
-                    ego_point, _ = self.map_service.get_lane_coord_and_heading(
-                        ego.initial_position.lane_id, ego.initial_position.s
-                    )
-                    obs_lane = obs.initial_position.lane_id
-                    obs_index = obs.initial_position.index
-                    obs_xes, obs_yes = self.map_service.get_lane_central_curve_by_id(
-                        obs_lane
-                    ).xy
-                    obs_point = Point(obs_xes[obs_index], obs_yes[obs_index])
+                # validate obstacles far enough from ego car
+                ego_point, _ = self.map_service.get_lane_coord_and_heading(
+                    ego.initial_position.lane_id, ego.initial_position.s
+                )
+                obs_lane = obs.initial_position.lane_id
+                obs_index = obs.initial_position.index
+                obs_xes, obs_yes = self.map_service.get_lane_central_curve_by_id(
+                    obs_lane
+                ).xy
+                obs_point = Point(obs_xes[obs_index], obs_yes[obs_index])
 
-                    if ego_point.distance(obs_point) < 15:
-                        # obstacle's initial position is too close to the ego car
-                        obstacles.remove(obs)
-                        continue
+                if ego_point.distance(obs_point) < max(obs.length, 5):
+                    # obstacle's initial position is too close to the ego car
+                    obstacles.remove(obs)
+                    continue
 
                 # validate obstacles that share same lane
                 obs_route = (
@@ -215,22 +213,3 @@ class GeneticOperators:
                 # ego car changed, no selection
                 result.append(curr)
         return result
-
-    def evaluate(
-        self, containers: List[ApolloContainer], scenarios: List[Scenario]
-    ) -> None:
-        """
-        Uses Apollo containers to evaluate the scenarios.
-            Mutates the fitness of obstacles in each scenario.
-        :param containers: Apollo containers.
-        :param scenarios: Scenarios to evaluate.
-        """
-        if self.dry_run:
-            for scenario in scenarios:
-                for obs in scenario.obstacles:
-                    obs.fitness.values = tuple(
-                        random.random() for _ in range(len(ObstacleFitness.weights))
-                    )
-            return
-
-        # TODO: implement scenario evaluation

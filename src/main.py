@@ -1,4 +1,5 @@
 import multiprocessing as mp
+from pathlib import Path
 from time import perf_counter
 from typing import List
 
@@ -11,10 +12,11 @@ from apollo.map_service import load_map_service
 from apollo.utils import change_apollo_map
 from config import APOLLO_ROOT, PROJECT_NAME
 from mylib.workers import analysis_worker, generator_worker, player_worker
+from scenoRITA.components.grading_metrics import GradingResult
 from scenoRITA.components.scenario_generator import ScenarioGenerator
 from scenoRITA.operators import GeneticOperators
 from scenoRITA.representation import Scenario
-from utils import generate_id, set_up_gflags, set_up_logging
+from utils import generate_id, get_output_dir, set_up_gflags, set_up_logging
 
 
 def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenario]):
@@ -24,7 +26,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         pending_queue = manager.Queue()
         play_queue = manager.Queue()
         analysis_queue = manager.Queue()
-        result_queue = manager.Queue()
+        result_queue: "mp.Queue[GradingResult]" = manager.Queue()  # type: ignore
         for scenario in scenarios:
             pending_queue.put(scenario)
         for _ in range(num_workers):
@@ -39,6 +41,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                     logger,
                     pending_queue,
                     play_queue,
+                    get_output_dir(),
                     FLAGS.dry_run,
                 ),
             )
@@ -47,7 +50,15 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         player_processes = [
             mp.Process(
                 target=player_worker,
-                args=(containers[x], logger, play_queue, analysis_queue, FLAGS.dry_run),
+                args=(
+                    containers[x],
+                    load_map_service(FLAGS.map),
+                    logger,
+                    play_queue,
+                    analysis_queue,
+                    get_output_dir(Path(f"/{PROJECT_NAME}"), False),
+                    FLAGS.dry_run,
+                ),
             )
             for x in range(len(containers))
         ]
@@ -59,13 +70,13 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                     logger,
                     analysis_queue,
                     result_queue,
+                    get_output_dir(),
                     FLAGS.dry_run,
                 ),
             )
             for _ in range(num_workers)
         ]
 
-        start = perf_counter()
         # start processes
         for p in generator_processes:
             p.start()
@@ -85,9 +96,8 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
             analysis_queue.put(None)
         for p in analyzer_processes:
             p.join()
-        end = perf_counter()
 
-        logger.info(f"Time taken: {end - start:.2f}s")
+        # TODO: update scenario with result_queue
 
 
 def start_containers(num_adc: int) -> List[ApolloContainer]:
@@ -143,24 +153,20 @@ def main(argv):
         scenario_generator.generate_scenario(0, x, FLAGS.min_obs, FLAGS.max_obs)
         for x in range(FLAGS.num_scenario)
     ]
-    # genetic_operators.evaluate(containers, scenarios)
     evaluate_scenarios(containers, scenarios)
-    if FLAGS.dry_run:
-        return
 
     generation_counter = 1
     while perf_counter() < expected_end_time:
-        logger.info(f"Generation {generation_counter}")
+        logger.info(f"Generation {generation_counter}: start")
         offsprings = genetic_operators.get_offsprings(scenarios)
-        for sce in offsprings:
-            logger.debug(
-                f"Offspring {sce.get_id()} has {len(sce.obstacles)} obstacles."
-            )
-        # genetic_operators.evaluate(containers, offsprings)
+        logger.info(f"Generation {generation_counter}: mut/cx done")
         evaluate_scenarios(containers, offsprings)
+        logger.info(f"Generation {generation_counter}: evaluation done")
         scenarios = genetic_operators.select(scenarios, offsprings)
-        generation_counter += 1
+        logger.info(f"Generation {generation_counter}: selection done")
+        logger.info(f"Generation {generation_counter}: end")
 
+        generation_counter += 1
         if FLAGS.dry_run and generation_counter == 5:
             break
 
