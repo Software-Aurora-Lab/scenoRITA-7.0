@@ -68,7 +68,9 @@ def player_worker(
             in_docker_output = Path(target_docker_dir, "records", f"{sce_id}")
             container.stop_ads_modules()
             container.stop_sim_control()
-            container.start_sim_control(0, 0, 0)
+            ego_initial = scenario.ego_car.initial_position
+            ep, et = map_service.get_lane_coord_and_heading(ego_initial.lane_id, ego_initial.s)
+            container.start_sim_control(ep.x, ep.y, et)
             container.start_ads_modules()
             container.start_recorder(str(in_docker_output))
             container.start_replay(str(in_docker_path))
