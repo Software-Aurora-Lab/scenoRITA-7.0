@@ -1,5 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
+from random import randint
+from typing import Set
 
 from deap import base
 
@@ -62,5 +64,25 @@ class Scenario:
     ego_car: EgoCar
     obstacles: list[Obstacle]
 
+    def __post_init__(self):
+        self.reassign_obs_ids()
+
     def get_id(self) -> str:
         return f"gen_{self.generation_id}_sce_{self.scenario_id}"
+
+    def reassign_obs_ids(self) -> bool:
+        """
+        Reassigns obstacle ids to be unique.
+        :return: True if ids were reassigned, False otherwise
+        """
+        current_ids = [obs.id for obs in self.obstacles]
+        if len(set(current_ids)) == len(current_ids):
+            # all ids are unique
+            return False
+
+        ids: Set[int] = set()
+        while len(ids) < len(self.obstacles):
+            ids.add(randint(10000, 99999))
+        for obs, oid in zip(self.obstacles, ids):
+            obs.id = oid
+        return True

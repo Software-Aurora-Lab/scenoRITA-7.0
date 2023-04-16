@@ -1,7 +1,7 @@
 import multiprocessing as mp
 from pathlib import Path
 from time import perf_counter
-from typing import List
+from typing import Dict, List
 
 from absl import app
 from absl.flags import FLAGS
@@ -39,6 +39,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                 args=(
                     ScenarioGenerator(load_map_service(FLAGS.map)),
                     logger,
+                    FLAGS.scenario_length,
                     pending_queue,
                     play_queue,
                     get_output_dir(),
@@ -54,8 +55,10 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                     containers[x],
                     load_map_service(FLAGS.map),
                     logger,
+                    FLAGS.scenario_length,
                     play_queue,
                     analysis_queue,
+                    get_output_dir(),
                     get_output_dir(Path(f"/{PROJECT_NAME}"), False),
                     FLAGS.dry_run,
                 ),
@@ -78,11 +81,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         ]
 
         # start processes
-        for p in generator_processes:
-            p.start()
-        for p in player_processes:
-            p.start()
-        for p in analyzer_processes:
+        for p in generator_processes + player_processes + analyzer_processes:
             p.start()
 
         # wait for processes to finish
@@ -97,7 +96,20 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         for p in analyzer_processes:
             p.join()
 
-        # TODO: update scenario with result_queue
+        # retrieve results
+        results: Dict[str, GradingResult] = dict()
+        while not result_queue.empty():
+            grading_result = result_queue.get()
+            results[grading_result.scenario_id] = grading_result
+
+        # update fitness values
+        for scenario in scenarios:
+            grading_result = results[scenario.get_id()]
+            for obs in scenario.obstacles:
+                obs.fitness.values = grading_result.fitnesses[obs.id]
+
+        # copy records with violations to a separate folder
+        # TODO: implement this
 
 
 def start_containers(num_adc: int) -> List[ApolloContainer]:
@@ -154,6 +166,9 @@ def main(argv):
         for x in range(FLAGS.num_scenario)
     ]
     evaluate_scenarios(containers, scenarios)
+
+    if FLAGS.dry_run:
+        return
 
     generation_counter = 1
     while perf_counter() < expected_end_time:
