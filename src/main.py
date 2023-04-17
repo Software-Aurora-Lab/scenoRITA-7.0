@@ -134,6 +134,7 @@ def start_containers(num_adc: int) -> List[ApolloContainer]:
     for ctn in containers:
         if not FLAGS.dry_run:
             ctn.start_container()
+            ctn.start_dreamview()
             logger.info(f"{ctn.container_name} @ {ctn.container_ip()}")
     return containers
 
