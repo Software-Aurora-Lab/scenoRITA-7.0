@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from random import randint
-from typing import Set
+from typing import List, Set
 
 from deap import base
 
@@ -35,6 +35,16 @@ class ObstacleFitness(base.Fitness):
     # maximize ego car acceleration
     # minimize ego car deceleration
     weights = (-1.0, -1.0, 1.0, 1.0, -1.0)
+
+    @staticmethod
+    def get_fallback_fitness() -> tuple[float, ...]:
+        result: List[float] = list()
+        for w in ObstacleFitness.weights:
+            if w == 1.0:
+                result.append(float("-inf"))
+            else:
+                result.append(float("inf"))
+        return tuple(result)
 
 
 @dataclass(slots=True)

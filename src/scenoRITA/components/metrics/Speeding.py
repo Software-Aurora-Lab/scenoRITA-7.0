@@ -25,7 +25,7 @@ class SpeedingTrace:
 
 
 class Speeding(BaseMetric):
-    MINIMUM_DURATION = 1.0
+    MINIMUM_DURATION = 0.0
 
     def __init__(self, topics: List[str], map_service: MapService) -> None:
         super().__init__(topics, map_service)
@@ -88,7 +88,7 @@ class Speeding(BaseMetric):
             violation_start = datetime.fromtimestamp(v[0].t / 1e9)
             violation_end = datetime.fromtimestamp(v[-1].t / 1e9)
             duration = (violation_end - violation_start).total_seconds()
-            if duration > Speeding.MINIMUM_DURATION:
+            if duration >= Speeding.MINIMUM_DURATION:
                 # violation is long enough
                 result.append(
                     Violation(

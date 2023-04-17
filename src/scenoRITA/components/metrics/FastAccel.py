@@ -22,7 +22,7 @@ class FastAccelTrace:
 
 
 class FastAccel(BaseMetric):
-    MINIMUM_DURATION = 1.0
+    MINIMUM_DURATION = 0.0
     THRESHOLD = 4.0
 
     def __init__(self, topics: List[str], map_service: MapService) -> None:
@@ -75,7 +75,7 @@ class FastAccel(BaseMetric):
             violation_end = datetime.fromtimestamp(v[-1].t / 1e9)
             duration = (violation_end - violation_start).total_seconds()
 
-            if duration > FastAccel.MINIMUM_DURATION:
+            if duration >= FastAccel.MINIMUM_DURATION:
                 results.append(
                     Violation(
                         "FastAccel",

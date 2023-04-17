@@ -91,7 +91,7 @@ class UnsafeLaneChange(BaseMetric):
             if self.fitness is None or duration > self.fitness:
                 self.fitness = duration
 
-            if duration > self.MINIMUM_DURATION:
+            if duration >= self.MINIMUM_DURATION:
                 results.append(
                     Violation(
                         "UnsafeLaneChange",

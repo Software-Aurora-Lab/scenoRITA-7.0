@@ -1,13 +1,17 @@
 from collections import defaultdict
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List, Optional, Set
 
 from shapely.geometry import LineString, Polygon
 
 from apollo.map_service import MapService
 from apollo.utils import (
-    generate_adc_polygon,
+    generate_adc_front_vertices,
     generate_adc_rear_vertices,
     generate_polygon,
+)
+from modules.common_msgs.localization_msgs.localization_pb2 import LocalizationEstimate
+from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
+    PerceptionObstacles,
 )
 
 from .BaseMetric import BaseMetric
@@ -19,8 +23,8 @@ class Collision(BaseMetric):
         super().__init__(topics, map_service)
         self.ignored_obstacles: Set[int] = set()
         self.obs_fitness: Dict[int, float] = defaultdict(lambda: float("inf"))
-        self.last_localization = None
-        self.last_perception_obstacles = None
+        self.last_localization: Optional[LocalizationEstimate] = None
+        self.last_perception_obstacles: Optional[PerceptionObstacles] = None
         self.violations: List[Violation] = list()
 
     def on_new_message(self, topic: str, msg: Any, t: float) -> None:
@@ -43,8 +47,10 @@ class Collision(BaseMetric):
         ego_speed = (ego_vx**2 + ego_vy**2) ** 0.5
         ego_theta = self.last_localization.pose.heading
 
-        ego_polygon = generate_adc_polygon(ego_x, ego_y, 0.0, ego_theta)
-        ego_p = Polygon(ego_polygon)
+        # ego_polygon = generate_adc_polygon(ego_x, ego_y, 0.0, ego_theta)
+        # ego_p = Polygon(ego_polygon)
+        ego_front = generate_adc_front_vertices(ego_x, ego_y, 0.0, ego_theta)
+        ego_front_l = LineString(ego_front)
         ego_rear = generate_adc_rear_vertices(ego_x, ego_y, 0.0, ego_theta)
         ego_rear_l = LineString(ego_rear)
 
@@ -66,7 +72,8 @@ class Collision(BaseMetric):
                 self.obs_fitness[obs.id] = float("inf")
                 continue
 
-            distance = ego_p.distance(obs_p)
+            # distance = ego_p.distance(obs_p)
+            distance = ego_front_l.distance(obs_p)
             self.obs_fitness[obs.id] = min(distance, self.obs_fitness[obs.id])
             if distance == 0.0 and ego_speed > 0.0:
                 # collision ocurred
@@ -80,6 +87,7 @@ class Collision(BaseMetric):
                             "ego_speed": ego_speed,
                             "obs_x": obs_x,
                             "obs_y": obs_y,
+                            "obs_type": obs.type,
                             "obs_theta": obs_theta,
                             "obs_length": obs.length,
                             "obs_width": obs.width,

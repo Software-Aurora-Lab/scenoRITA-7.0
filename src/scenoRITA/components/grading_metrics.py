@@ -49,11 +49,14 @@ def grade_scenario(
         try:
             record_file = Record(record, "r")
             metrics = get_grading_metrics(map_service)
+            has_localization = False
             for topic, msg, t in record_file.read_messages():
+                if topic == "/apollo/localization/pose":
+                    has_localization = True
                 for metric in metrics:
                     if topic in metric.topics:
                         metric.on_new_message(topic, msg, t)
-
+            assert has_localization, "No localization in record"
             collision, speeding, unsafe_lane_change, fast_accel, hard_braking = metrics
 
             violations: List[Violation] = list()

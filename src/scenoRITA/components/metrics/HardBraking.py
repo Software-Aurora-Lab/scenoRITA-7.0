@@ -22,7 +22,7 @@ class HardBrakingTrace:
 
 
 class HardBraking(BaseMetric):
-    MINIMUM_DURATION = 1.0
+    MINIMUM_DURATION = 0.0
     THRESHOLD = -4.0
 
     def __init__(self, topics: List[str], map_service: MapService) -> None:
