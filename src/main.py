@@ -1,6 +1,6 @@
 import multiprocessing as mp
-from pathlib import Path
 import shutil
+from pathlib import Path
 from time import perf_counter
 from typing import Dict, List
 
@@ -11,7 +11,7 @@ from loguru import logger
 from apollo.container import ApolloContainer
 from apollo.map_service import load_map_service
 from apollo.utils import change_apollo_map
-from config import APOLLO_ROOT, PROJECT_NAME
+from config import APOLLO_ROOT, PROJECT_NAME, SCRIPTS
 from mylib.workers import analysis_worker, generator_worker, player_worker
 from scenoRITA.components.grading_metrics import GradingResult
 from scenoRITA.components.scenario_generator import ScenarioGenerator
@@ -115,10 +115,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
             violations_dir.mkdir(parents=True, exist_ok=True)
             for violation in results[sce_id].violations:
                 # copy record to violations folder
-                shutil.copy2(
-                    results[sce_id].record,
-                    violations_dir
-                )
+                shutil.copy2(results[sce_id].record, violations_dir)
                 violation_csv = Path(violations_dir, f"{violation.type}.csv")
                 if not violation_csv.exists():
                     with open(violation_csv, "w") as f:
@@ -134,9 +131,14 @@ def start_containers(num_adc: int) -> List[ApolloContainer]:
         ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_{generate_id()}")
         for _ in range(num_adc)
     ]
+    if len(containers) == 1:
+        script = SCRIPTS.DEV_START
+    else:
+        script = SCRIPTS.MULTI_CTN_DEV_START
+
     for ctn in containers:
         if not FLAGS.dry_run:
-            ctn.start_container()
+            ctn.start_container(script)
             logger.info(f"{ctn.container_name} @ {ctn.container_ip()}")
     return containers
 
