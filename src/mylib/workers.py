@@ -110,11 +110,28 @@ def analysis_worker(
             result_queue.put(
                 GradingResult(
                     scenario.get_id(),
+                    target_input_file,
                     fitnesses,
                     [],
                 )
             )
         else:
-            result_queue.put(grade_scenario(scenario, target_input_file, map_service))
+            grading_result = grade_scenario(scenario, target_input_file, map_service)
+            if grading_result is None:
+                _logger.error(f"{sce_id}: grading failed after 3 retries.")
+                fallback_fitness = dict()
+                for obs in scenario.obstacles:
+                    fitness_values = list()
+                    for weight in ObstacleFitness.weights:
+                        if weight == 1.0:
+                            fitness_values.append(float("-inf"))
+                        else:
+                            fitness_values.append(float("inf"))
+                    fallback_fitness[obs.id] = tuple(fitness_values)
+                result_queue.put(
+                    GradingResult(sce_id, target_input_file, fallback_fitness, [])
+                )
+            else:
+                result_queue.put(grading_result)
 
         _logger.info(f"{sce_id}: analysis end")
