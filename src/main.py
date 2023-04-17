@@ -1,5 +1,6 @@
 import multiprocessing as mp
 from pathlib import Path
+import shutil
 from time import perf_counter
 from typing import Dict, List
 
@@ -109,7 +110,23 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                 obs.fitness.values = grading_result.fitnesses[obs.id]
 
         # copy records with violations to a separate folder
-        # TODO: implement this
+        for sce_id in results:
+            violations_dir = Path(get_output_dir(), "violations")
+            violations_dir.mkdir(parents=True, exist_ok=True)
+            for violation in results[sce_id].violations:
+                # copy record to violations folder
+                shutil.copy2(
+                    results[sce_id].record,
+                    violations_dir
+                )
+                violation_csv = Path(violations_dir, f"{violation.type}.csv")
+                if not violation_csv.exists():
+                    with open(violation_csv, "w") as f:
+                        header_row = ",".join(violation.features.keys())
+                        f.write(f"sce_id,{header_row}\n")
+                with open(violation_csv, "a") as f:
+                    feature_row = ",".join(map(str, violation.features.values()))
+                    f.write(f"{sce_id},{feature_row}\n")
 
 
 def start_containers(num_adc: int) -> List[ApolloContainer]:
