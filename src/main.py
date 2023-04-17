@@ -200,6 +200,10 @@ def main(argv):
         if FLAGS.dry_run and generation_counter == 5:
             break
 
+    logger.info("Stopping Apollo containers")
+    for ctn in containers:
+        ctn.rm_container()
+
 
 if __name__ == "__main__":
     set_up_gflags()

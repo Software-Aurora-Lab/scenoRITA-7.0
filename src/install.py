@@ -101,5 +101,7 @@ if __name__ == "__main__":
     change_script_permissions()
     compile_apollo()
     install_sim_control_standalone()
+    ctn = ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_installer")
+    ctn.rm_container()
     minutes = (perf_counter() - start) / 60
     logger.info(f"Installation completed in {minutes:.2f} minutes")
