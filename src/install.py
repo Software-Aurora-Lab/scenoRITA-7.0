@@ -61,13 +61,13 @@ def compile_apollo():
         "planning",
         "prediction",
         "routing",
-        "cyber",
         "map",
         "common",
         "monitor",
         "common_msgs",  # new in Apollo 8.0.0
     }
     modules = list(needed_modules.intersection(apollo_modules))
+    ctn.exec(f"bash apollo.sh build cyber", verbose=True)
     ctn.exec(f"bash apollo.sh build {' '.join(modules)}", verbose=True)
 
 
