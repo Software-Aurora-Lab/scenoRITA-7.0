@@ -11,7 +11,7 @@ from loguru import logger
 from apollo.container import ApolloContainer
 from apollo.map_service import load_map_service
 from apollo.utils import change_apollo_map
-from config import APOLLO_ROOT, PROJECT_NAME, SCRIPTS
+from config import APOLLO_ROOT, PROJECT_NAME
 from mylib.workers import analysis_worker, generator_worker, player_worker
 from scenoRITA.components.grading_metrics import GradingResult
 from scenoRITA.components.scenario_generator import ScenarioGenerator
