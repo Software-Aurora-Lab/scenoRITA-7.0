@@ -7,7 +7,7 @@ from typing import Optional
 
 from apollo.container import ApolloContainer
 from apollo.map_service import MapService
-from scenoRITA.components.grading_metrics import GradingResult
+from scenoRITA.components.grading_metrics import GradingResult, grade_scenario
 from scenoRITA.components.scenario_generator import ScenarioGenerator
 from scenoRITA.representation import ObstacleFitness, Scenario
 
@@ -114,5 +114,7 @@ def analysis_worker(
                     [],
                 )
             )
+        else:
+            result_queue.put(grade_scenario(scenario, target_input_file, map_service))
 
         _logger.info(f"{sce_id}: analysis end")
