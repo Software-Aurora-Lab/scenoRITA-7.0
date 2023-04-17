@@ -6,9 +6,7 @@ from typing import List, Set
 from deap import base
 
 from apollo.map_service import PositionEstimate
-from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
-    PerceptionObstacle,
-)
+from modules.perception.proto.perception_obstacle_pb2 import PerceptionObstacle
 
 
 class ObstacleType(Enum):

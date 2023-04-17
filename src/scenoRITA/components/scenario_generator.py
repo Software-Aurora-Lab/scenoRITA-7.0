@@ -11,17 +11,17 @@ from shapely.geometry import Polygon
 from apollo.map_service import MapService, PositionEstimate
 from apollo.utils import generate_adc_polygon, generate_polygon
 from config import PROJECT_NAME
-from modules.common_msgs.basic_msgs.geometry_pb2 import Point3D, PointENU
-from modules.common_msgs.basic_msgs.header_pb2 import Header
-from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
+from modules.common.proto.geometry_pb2 import Point3D, PointENU
+from modules.common.proto.header_pb2 import Header
+from modules.perception.proto.perception_obstacle_pb2 import (
     PerceptionObstacle,
     PerceptionObstacles,
 )
-from modules.common_msgs.perception_msgs.traffic_light_detection_pb2 import (
+from modules.perception.proto.traffic_light_detection_pb2 import (
     TrafficLight,
     TrafficLightDetection,
 )
-from modules.common_msgs.routing_msgs.routing_pb2 import LaneWaypoint, RoutingRequest
+from modules.routing.proto.routing_pb2 import LaneWaypoint, RoutingRequest
 from mylib import cubic_spline_planner, stanley_controller
 
 from ..representation import (

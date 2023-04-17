@@ -13,11 +13,9 @@ from shapely.geometry import Point
 from apollo.map_service import MapService, load_map_service
 from apollo.utils import generate_adc_polygon
 from config import SUPPORTED_MAPS
-from modules.common_msgs.localization_msgs.localization_pb2 import LocalizationEstimate
-from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
-    PerceptionObstacles,
-)
-from modules.common_msgs.planning_msgs.planning_pb2 import ADCTrajectory
+from modules.localization.proto.localization_pb2 import LocalizationEstimate
+from modules.perception.proto.perception_obstacle_pb2 import PerceptionObstacles
+from modules.planning.proto.planning_pb2 import ADCTrajectory
 
 
 def plot_ego(msg: LocalizationEstimate, radius: int) -> None:

@@ -9,10 +9,8 @@ from apollo.utils import (
     generate_adc_rear_vertices,
     generate_polygon,
 )
-from modules.common_msgs.localization_msgs.localization_pb2 import LocalizationEstimate
-from modules.common_msgs.perception_msgs.perception_obstacle_pb2 import (
-    PerceptionObstacles,
-)
+from modules.localization.proto.localization_pb2 import LocalizationEstimate
+from modules.perception.proto.perception_obstacle_pb2 import PerceptionObstacles
 
 from .BaseMetric import BaseMetric
 from .Violation import Violation
