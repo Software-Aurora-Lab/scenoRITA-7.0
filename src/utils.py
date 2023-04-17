@@ -21,6 +21,7 @@ def set_up_gflags():
     flags.DEFINE_string("map", "borregas_ave", "Name of the map to use.")
     flags.DEFINE_integer("num_adc", 5, "Number of ADCs to use.")
     flags.DEFINE_boolean("dry_run", os.uname()[0] != "Linux", "Dry run mode.")
+    flags.DEFINE_boolean("dreamview", False, "Enable Dreamview.")
     flags.DEFINE_string(
         "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
     )
