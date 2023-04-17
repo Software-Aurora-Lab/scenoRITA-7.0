@@ -19,7 +19,7 @@ def generate_id(size=5):
 def set_up_gflags():
     # Execution flags
     flags.DEFINE_string("map", "borregas_ave", "Name of the map to use.")
-    flags.DEFINE_integer("num_adc", 1, "Number of ADCs to use.")
+    flags.DEFINE_integer("num_adc", 5, "Number of ADCs to use.")
     flags.DEFINE_boolean("dry_run", os.uname()[0] != "Linux", "Dry run mode.")
     flags.DEFINE_string(
         "execution_id", datetime.now().strftime(r"%m%d_%H%M%S"), "Execution ID."
@@ -27,7 +27,7 @@ def set_up_gflags():
     flags.DEFINE_integer("perception_frequency", 10, "Perception frequency.")
     flags.DEFINE_integer("scenario_length", 30, "Length of the scenario in seconds.")
     flags.DEFINE_boolean("colorize", True, "Colorize log output.")
-    flags.DEFINE_string("log_level", "DEBUG", "Log level.")
+    flags.DEFINE_string("log_level", "INFO", "Log level.")
 
     # Genetic algorithm flags
     flags.DEFINE_integer("num_scenario", 10, "Number of scenarios to generate.")
