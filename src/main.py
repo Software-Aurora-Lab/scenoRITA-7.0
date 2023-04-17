@@ -44,7 +44,6 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                     pending_queue,
                     play_queue,
                     get_output_dir(),
-                    FLAGS.dry_run,
                 ),
             )
             for _ in range(num_workers)

@@ -20,7 +20,6 @@ def generator_worker(
     task_queue: "mp.Queue[Optional[Scenario]]",
     result_queue: mp.Queue,
     target_dir: Path,
-    dry_run: bool,
 ):
     while True:
         scenario = task_queue.get()
@@ -30,14 +29,9 @@ def generator_worker(
 
         target_file = Path(target_dir, "input", f"{scenario.get_id()}")
         target_file.parent.mkdir(parents=True, exist_ok=True)
-        if dry_run:
-            with open(target_file, "w") as fp:
-                fp.write("dry run")
-        else:
-            # TODO: generate scenario
-            generator.write_scenario_to_file(
-                scenario, target_file, scenario_length, perception_frequency
-            )
+        generator.write_scenario_to_file(
+            scenario, target_file, scenario_length, perception_frequency
+        )
 
         _logger.info(f"{scenario.get_id()}: generate end")
         result_queue.put(scenario)
