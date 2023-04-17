@@ -131,14 +131,9 @@ def start_containers(num_adc: int) -> List[ApolloContainer]:
         ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_{generate_id()}")
         for _ in range(num_adc)
     ]
-    if len(containers) == 1:
-        script = SCRIPTS.DEV_START
-    else:
-        script = SCRIPTS.MULTI_CTN_DEV_START
-
     for ctn in containers:
         if not FLAGS.dry_run:
-            ctn.start_container(script)
+            ctn.start_container()
             logger.info(f"{ctn.container_name} @ {ctn.container_ip()}")
     return containers
 
