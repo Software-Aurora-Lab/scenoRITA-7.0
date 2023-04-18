@@ -2,7 +2,7 @@ import math
 from dataclasses import dataclass
 from datetime import datetime
 from itertools import groupby
-from typing import Any, List
+from typing import Any, List, Optional
 
 from apollo.map_service import MapService
 
@@ -29,6 +29,8 @@ class HardBraking(BaseMetric):
         super().__init__(topics, map_service)
         self.traces: List[HardBrakingTrace] = list()
         self.fitness = 0.0
+        self.prev_v: Optional[float] = None
+        self.prev_t: Optional[float] = None
 
     def on_new_message(self, topic: str, msg: Any, t: float) -> None:
         ego_x = msg.pose.position.x
@@ -39,14 +41,23 @@ class HardBraking(BaseMetric):
         ego_vy = msg.pose.linear_velocity.y
         ego_speed = math.sqrt(ego_vx**2 + ego_vy**2)
 
-        ego_ax = msg.pose.linear_acceleration.x
-        ego_ay = msg.pose.linear_acceleration.y
-        ego_acceleration = math.sqrt(ego_ax**2 + ego_ay**2)
+        if self.prev_v is None:
+            self.prev_v = ego_speed
+            self.prev_t = t
+            return
+        
+        ego_acceleration = (ego_speed - self.prev_v) / ((t - self.prev_t) / 1e9)
+        self.prev_v = ego_speed
+        self.prev_t = t
 
-        projection = ego_vx * ego_ax + ego_vy * ego_ay
+        # ego_ax = msg.pose.linear_acceleration.x
+        # ego_ay = msg.pose.linear_acceleration.y
+        # ego_acceleration = math.sqrt(ego_ax**2 + ego_ay**2)
 
-        if projection < 0:
-            ego_acceleration = -ego_acceleration
+        # projection = ego_vx * ego_ax + ego_vy * ego_ay
+
+        # if projection < 0:
+        #     ego_acceleration = -ego_acceleration
 
         self.fitness = min(self.fitness, ego_acceleration)
 
