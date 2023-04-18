@@ -61,7 +61,7 @@ class ScenarioGenerator:
 
     def generate_obstacle_route(self) -> Tuple[ObstaclePosition, ObstaclePosition]:
         while True:
-            initial_lane_id = random.choice(list(self.map_service.lane_table.keys()))
+            initial_lane_id = random.choice(list(self.map_service.obs_routing_graph.nodes()))
             reachable = nx.shortest_path(
                 self.map_service.obs_routing_graph, initial_lane_id
             )
