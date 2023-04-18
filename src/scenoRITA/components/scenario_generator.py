@@ -261,8 +261,8 @@ class ScenarioGenerator:
         rx, ry = self.generate_obs_reference_path(
             obstacle.initial_position, obstacle.final_position
         )
-        cx, cy, cyaw, _, _ = cubic_spline_planner.calc_spline_course(rx, ry, ds=0.5)
-
+        planner_sample_distance = 0.5
+        cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(rx, ry, ds=planner_sample_distance)
         state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
         last_idx = len(cx) - 1
 
@@ -274,8 +274,8 @@ class ScenarioGenerator:
         if obstacle.motion == ObstacleMotion.DYNAMIC:
             target_speed = [obstacle.speed for _ in range(len(cx))]
             for i in range(len(target_speed)):
-                if cyaw[i] > 0.01:
-                    target_speed[i] = min(target_speed[i], 5.0)
+                if abs(ck[i]) > 0.1:
+                    target_speed[i] = min(target_speed[i], 4.0)
         else:
             target_speed = [0.0 for _ in range(len(cx))]
         L = obstacle.length
@@ -298,6 +298,12 @@ class ScenarioGenerator:
                 t.append(current_time)
             else:
                 # have not reached to goal, keep going
+                k_decelerate_distance = 15.0 # TODO dynamic meters
+                k_decelerate_index = int(k_decelerate_distance / planner_sample_distance)
+                if last_idx - target_idx < k_decelerate_index:
+                    prev_v = v[-1]
+                    target_v = round(target_speed[target_idx] * (last_idx - target_idx) / k_decelerate_index, 2)
+                    target_speed[target_idx] = min(prev_v, target_v)
                 ai = stanley_controller.pid_control(target_speed[target_idx], state.v)
                 state.update(ai, di, L, dt)
                 current_time += dt
