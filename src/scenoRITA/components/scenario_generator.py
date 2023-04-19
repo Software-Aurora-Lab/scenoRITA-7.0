@@ -170,8 +170,10 @@ class ScenarioGenerator:
 
     def generate_ego_car(self) -> EgoCar:
         lane_ids = self.map_service.non_junction_lanes
+        routing_starts = self.map_service.routing_graph.nodes()
+        options = list(set(lane_ids) & set(routing_starts))
         while True:
-            lane_id = random.choice(lane_ids)
+            lane_id = random.choice(options)
             descendants = nx.descendants(self.map_service.routing_graph, lane_id)
             if len(descendants) > 0:
                 target_lane_id = random.choice(list(descendants))
@@ -182,7 +184,7 @@ class ScenarioGenerator:
                         float(int(self.map_service.get_lane_by_id(lane_id).length)),
                     ),
                 )
-            lane_ids.remove(lane_id)
+            options.remove(lane_id)
 
     def generate_scenario(
         self, gen_id: int, sce_id: int, min_obs: int, max_obs: int
@@ -281,10 +283,10 @@ class ScenarioGenerator:
             obstacle.initial_position, obstacle.final_position
         )
         reference_linestring = LineString([(x, y) for x, y in zip(rx, ry)])
-        k_max_reference_length = 500.0  # meters
+        k_max_reference_length = obstacle.speed * scenario_length  # meters
         if reference_linestring.length > k_max_reference_length:
-            cutted = cut(reference_linestring, 500)
-            rx, ry = cutted[0].xy
+            the_cut = cut(reference_linestring, k_max_reference_length)
+            rx, ry = the_cut[0].xy
 
         planner_sample_distance = 0.5
         cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(
@@ -325,7 +327,11 @@ class ScenarioGenerator:
                 t.append(current_time)
             else:
                 # have not reached to goal, keep going
-                k_decelerate_distance = 15.0  # TODO dynamic meters
+                # distance needed to decelerate to zero
+                # v^2 = u^2 + 2as
+                # 2as = v^2 - u^2
+                # s = (v^2 - u^2) / 2a
+                k_decelerate_distance = obstacle.speed**2 / (2 * 4.0)
                 k_decelerate_index = int(
                     k_decelerate_distance / planner_sample_distance
                 )
