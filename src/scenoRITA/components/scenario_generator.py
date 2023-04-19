@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 import networkx as nx
 from cyber_record.record import Record
-from shapely.geometry import Polygon, LineString, Point
+from shapely.geometry import LineString, Point, Polygon
 
 from apollo.map_service import MapService, PositionEstimate
 from apollo.utils import generate_adc_polygon, generate_polygon
@@ -54,6 +54,7 @@ ObstacleConstraints = {
     },
 }
 
+
 def cut(line: LineString, distance: float):
     # Cuts a line in two at a distance from its starting point
     if distance <= 0.0 or distance >= line.length:
@@ -62,14 +63,14 @@ def cut(line: LineString, distance: float):
     for i, p in enumerate(coords):
         pd = line.project(Point(p))
         if pd == distance:
-            return [
-                LineString(coords[:i+1]),
-                LineString(coords[i:])]
+            return [LineString(coords[: i + 1]), LineString(coords[i:])]
         if pd > distance:
             cp = line.interpolate(distance)
             return [
                 LineString(coords[:i] + [(cp.x, cp.y)]),
-                LineString([(cp.x, cp.y)] + coords[i:])]
+                LineString([(cp.x, cp.y)] + coords[i:]),
+            ]
+
 
 class ScenarioGenerator:
     def __init__(self, map_service: MapService) -> None:
@@ -77,7 +78,9 @@ class ScenarioGenerator:
 
     def generate_obstacle_route(self) -> Tuple[ObstaclePosition, ObstaclePosition]:
         while True:
-            initial_lane_id = random.choice(list(self.map_service.obs_routing_graph.nodes()))
+            initial_lane_id = random.choice(
+                list(self.map_service.obs_routing_graph.nodes())
+            )
             reachable = nx.shortest_path(
                 self.map_service.obs_routing_graph, initial_lane_id
             )
@@ -278,13 +281,15 @@ class ScenarioGenerator:
             obstacle.initial_position, obstacle.final_position
         )
         reference_linestring = LineString([(x, y) for x, y in zip(rx, ry)])
-        k_max_reference_length = 500.0 # meters
+        k_max_reference_length = 500.0  # meters
         if reference_linestring.length > k_max_reference_length:
             cutted = cut(reference_linestring, 500)
-            rx,ry = cutted[0].xy
+            rx, ry = cutted[0].xy
 
         planner_sample_distance = 0.5
-        cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(rx, ry, ds=planner_sample_distance)
+        cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(
+            rx, ry, ds=planner_sample_distance
+        )
         state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
         last_idx = len(cx) - 1
 
@@ -320,11 +325,18 @@ class ScenarioGenerator:
                 t.append(current_time)
             else:
                 # have not reached to goal, keep going
-                k_decelerate_distance = 15.0 # TODO dynamic meters
-                k_decelerate_index = int(k_decelerate_distance / planner_sample_distance)
+                k_decelerate_distance = 15.0  # TODO dynamic meters
+                k_decelerate_index = int(
+                    k_decelerate_distance / planner_sample_distance
+                )
                 if last_idx - target_idx < k_decelerate_index:
                     prev_v = v[-1]
-                    target_v = round(target_speed[target_idx] * (last_idx - target_idx) / k_decelerate_index, 2)
+                    target_v = round(
+                        target_speed[target_idx]
+                        * (last_idx - target_idx)
+                        / k_decelerate_index,
+                        2,
+                    )
                     target_speed[target_idx] = min(prev_v, target_v)
                 ai = stanley_controller.pid_control(target_speed[target_idx], state.v)
                 state.update(ai, di, L, dt)

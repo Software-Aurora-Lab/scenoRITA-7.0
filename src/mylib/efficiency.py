@@ -1,10 +1,11 @@
 import os
 import re
-import numpy as np
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+
+import numpy as np
 
 LOGGING_PREFIX_REGEX = (
     "^(?P<severity>[DIWEF])(?P<month>\d\d)(?P<day>\d\d) "
@@ -101,7 +102,7 @@ class LogParser:
                     second=int(group_dict["second"]),
                     microsecond=int(group_dict["microsecond"]),
                 )
-                self.parse_line(msg_time, line[match.span()[1] + 2:])
+                self.parse_line(msg_time, line[match.span()[1] + 2 :])
 
     def print_dict_stats(self, name: str, D: dict):
         values = []
@@ -121,9 +122,9 @@ class LogParser:
         return np.mean(values)
 
     def print_header(self, header: str):
-        print('=' * len(header))
+        print("=" * len(header))
         print(header)
-        print('=' * len(header))
+        print("=" * len(header))
 
     def print_stats(self):
         self.print_header(" Stats Per Scenario ")
@@ -139,8 +140,18 @@ class LogParser:
 
     def output_latex(self, fp):
         fp.write("            \\textbf{" + self.map_name + "}")
-        time_list = [self.get_mean_value(tracker) for tracker in [self.sce_generate_tracker, self.sce_play_tracker, self.sce_analysis_tracker,
-                        self.gen_mut_tracker, self.gen_eval_tracker, self.gen_select_tracker, self.gen_tracker]]
+        time_list = [
+            self.get_mean_value(tracker)
+            for tracker in [
+                self.sce_generate_tracker,
+                self.sce_play_tracker,
+                self.sce_analysis_tracker,
+                self.gen_mut_tracker,
+                self.gen_eval_tracker,
+                self.gen_select_tracker,
+                self.gen_tracker,
+            ]
+        ]
         time_list.insert(3, np.sum(time_list[0:3]))
         for time in time_list:
             fp.write(" & " + f"{time:.2f}")
