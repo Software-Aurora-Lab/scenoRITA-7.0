@@ -1,5 +1,6 @@
 import multiprocessing as mp
 import shutil
+import threading
 from pathlib import Path
 from time import perf_counter
 from typing import Dict, List
@@ -22,6 +23,7 @@ from utils import generate_id, get_output_dir, set_up_gflags, set_up_logging
 
 def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenario]):
     num_workers = 5
+    multi_process_generate = False
     with mp.Manager() as manager:
         # set up queues
         pending_queue = manager.Queue()
@@ -33,28 +35,35 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         for _ in range(num_workers):
             pending_queue.put(None)
 
+        map_service = load_map_service(FLAGS.map)
+        scenario_generator = ScenarioGenerator(map_service)
+
         # set up processes
-        generator_processes = [
-            mp.Process(
-                target=generator_worker,
-                args=(
-                    ScenarioGenerator(load_map_service(FLAGS.map)),
-                    logger,
-                    FLAGS.scenario_length,
-                    FLAGS.perception_frequency,
-                    pending_queue,
-                    play_queue,
-                    get_output_dir(),
-                ),
-            )
-            for _ in range(num_workers)
-        ]
+        if multi_process_generate:
+            generator_processes = [
+                threading.Thread(
+                    target=generator_worker,
+                    args=(
+                        scenario_generator,
+                        logger,
+                        FLAGS.scenario_length,
+                        FLAGS.perception_frequency,
+                        pending_queue,
+                        play_queue,
+                        get_output_dir(),
+                    ),
+                )
+                for _ in range(num_workers)
+            ]
+        else:
+            generator_processes = []
+
         player_processes = [
-            mp.Process(
+            threading.Thread(
                 target=player_worker,
                 args=(
                     containers[x],
-                    load_map_service(FLAGS.map),
+                    map_service,
                     logger,
                     FLAGS.scenario_length,
                     play_queue,
@@ -67,10 +76,10 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
             for x in range(len(containers))
         ]
         analyzer_processes = [
-            mp.Process(
+            threading.Thread(
                 target=analysis_worker,
                 args=(
-                    load_map_service(FLAGS.map),
+                    map_service,
                     logger,
                     analysis_queue,
                     result_queue,
@@ -84,6 +93,21 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         # start processes
         for p in generator_processes + player_processes + analyzer_processes:
             p.start()
+
+        if not multi_process_generate:
+            for scenario in scenarios:
+                target_dir = get_output_dir()
+                target_file = Path(target_dir, "input", f"{scenario.get_id()}")
+                target_file.parent.mkdir(parents=True, exist_ok=True)
+                logger.info(f"{scenario.get_id()}: generate start")
+                scenario_generator.write_scenario_to_file(
+                    scenario,
+                    target_file,
+                    FLAGS.scenario_length,
+                    FLAGS.perception_frequency,
+                )
+                logger.info(f"{scenario.get_id()}: generate end")
+                play_queue.put(scenario)
 
         # wait for processes to finish
         for p in generator_processes:
@@ -159,6 +183,7 @@ def main(argv):
     # loading map service
     logger.info(f"Loading map service for {FLAGS.map}")
     map_service = load_map_service(FLAGS.map)
+    logger.info(f"Map service loaded")
 
     # genetic algorithm main loop
     scenario_generator = ScenarioGenerator(map_service)
