@@ -201,6 +201,9 @@ def main(argv):
         if FLAGS.dry_run and generation_counter == 5:
             break
 
+    total_hour = (perf_counter() - ga_start_time) / 3600
+    logger.info(f"Total time: {total_hour:.2f}h")
+
     logger.info("Stopping Apollo containers")
     for ctn in containers:
         ctn.rm_container()
