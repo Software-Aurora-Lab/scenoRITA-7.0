@@ -70,11 +70,13 @@ class LogParser:
             pass
 
     def parse_map_name(self) -> None:
-        map_part = self.filename.resolve().parts[-2]
-        match = re.match("\d+_\d+_(.*)", map_part)
-        if match:
-            map_name = match.groups()[0]
-            self.map_name = " ".join([i.capitalize() for i in map_name.split("_")])
+        map_name = self.filename.resolve().parts[-1].split(".")[0]
+        self.map_name = " ".join([i.capitalize() for i in map_name.split("_")])
+        # map_part = self.filename.resolve().parts[-2]
+        # match = re.match("\d+_\d+_(.*)", map_part)
+        # if match:
+        #     map_name = match.groups()[0]
+        #     self.map_name = " ".join([i.capitalize() for i in map_name.split("_")])
 
     def parse(self) -> None:
         self.parse_map_name()
@@ -137,15 +139,19 @@ class LogParser:
 
     def output_latex(self, fp):
         fp.write("            \\textbf{" + self.map_name + "}")
-        for tracker in [self.sce_tracker, self.sce_generate_tracker, self.sce_play_tracker, self.sce_analysis_tracker,
-                        self.gen_mut_tracker, self.gen_eval_tracker, self.gen_select_tracker, self.gen_tracker]:
-            fp.write(" & " + f"{self.get_mean_value(tracker):.2f}")
+        time_list = [self.get_mean_value(tracker) for tracker in [self.sce_generate_tracker, self.sce_play_tracker, self.sce_analysis_tracker,
+                        self.gen_mut_tracker, self.gen_eval_tracker, self.gen_select_tracker, self.gen_tracker]]
+        time_list.insert(3, np.sum(time_list[0:3]))
+        for time in time_list:
+            fp.write(" & " + f"{time:.2f}")
         fp.write(" \\\\\n")
 
 
 def main():
     out_dir = Path("/home/cloudsky/Research/Apollo/scenoRITA-V3/out")
-    log_files = [f"{out_dir}/{i}/scenoRITA_V3.log" for i in os.listdir(out_dir) if os.path.isdir(f"{out_dir}/{i}")]
+    # log_files = [f"{out_dir}/{i}/scenoRITA_V3.log" for i in os.listdir(out_dir) if os.path.isdir(f"{out_dir}/{i}")]
+    log_dir = f"{out_dir}/logs"
+    log_files = [f"{log_dir}/{i}" for i in os.listdir(log_dir)]
 
     # or
     # log_files = ["/home/cloudsky/Research/Apollo/scenoRITA-V3/out/0417_211736_borregas_ave/scenoRITA_V3.log",
