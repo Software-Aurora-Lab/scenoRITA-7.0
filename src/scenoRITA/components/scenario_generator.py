@@ -6,7 +6,7 @@ from typing import List, Tuple
 
 import networkx as nx
 from cyber_record.record import Record
-from shapely.geometry import Polygon
+from shapely.geometry import Polygon, LineString, Point
 
 from apollo.map_service import MapService, PositionEstimate
 from apollo.utils import generate_adc_polygon, generate_polygon
@@ -54,6 +54,22 @@ ObstacleConstraints = {
     },
 }
 
+def cut(line: LineString, distance: float):
+    # Cuts a line in two at a distance from its starting point
+    if distance <= 0.0 or distance >= line.length:
+        return [LineString(line)]
+    coords = list(line.coords)
+    for i, p in enumerate(coords):
+        pd = line.project(Point(p))
+        if pd == distance:
+            return [
+                LineString(coords[:i+1]),
+                LineString(coords[i:])]
+        if pd > distance:
+            cp = line.interpolate(distance)
+            return [
+                LineString(coords[:i] + [(cp.x, cp.y)]),
+                LineString([(cp.x, cp.y)] + coords[i:])]
 
 class ScenarioGenerator:
     def __init__(self, map_service: MapService) -> None:
@@ -261,6 +277,12 @@ class ScenarioGenerator:
         rx, ry = self.generate_obs_reference_path(
             obstacle.initial_position, obstacle.final_position
         )
+        reference_linestring = LineString([(x, y) for x, y in zip(rx, ry)])
+        k_max_reference_length = 500.0 # meters
+        if reference_linestring.length > k_max_reference_length:
+            cutted = cut(reference_linestring, 500)
+            rx,ry = cutted[0].xy
+
         planner_sample_distance = 0.5
         cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(rx, ry, ds=planner_sample_distance)
         state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
