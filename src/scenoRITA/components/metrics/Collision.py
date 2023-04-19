@@ -6,6 +6,7 @@ from shapely.geometry import LineString, Polygon
 from apollo.map_service import MapService
 from apollo.utils import (
     generate_adc_front_vertices,
+    generate_adc_polygon,
     generate_adc_rear_vertices,
     generate_polygon,
 )
@@ -13,6 +14,7 @@ from modules.localization.proto.localization_pb2 import LocalizationEstimate
 from modules.perception.proto.perception_obstacle_pb2 import PerceptionObstacles
 
 from .BaseMetric import BaseMetric
+from .OracleInterupt import OracleInterupt
 from .Violation import Violation
 
 
@@ -45,13 +47,14 @@ class Collision(BaseMetric):
         ego_speed = (ego_vx**2 + ego_vy**2) ** 0.5
         ego_theta = self.last_localization.pose.heading
 
-        # ego_polygon = generate_adc_polygon(ego_x, ego_y, 0.0, ego_theta)
-        # ego_p = Polygon(ego_polygon)
+        ego_polygon = generate_adc_polygon(ego_x, ego_y, 0.0, ego_theta)
+        ego_p = Polygon(ego_polygon)
         ego_front = generate_adc_front_vertices(ego_x, ego_y, 0.0, ego_theta)
         ego_front_l = LineString(ego_front)
         ego_rear = generate_adc_rear_vertices(ego_x, ego_y, 0.0, ego_theta)
         ego_rear_l = LineString(ego_rear)
 
+        collision_detected = False
         for obs in self.last_perception_obstacles.perception_obstacle:
             if obs.id in self.ignored_obstacles:
                 continue
@@ -68,6 +71,7 @@ class Collision(BaseMetric):
                 # rear end collision
                 self.ignored_obstacles.add(obs.id)
                 self.obs_fitness[obs.id] = float("inf")
+                collision_detected = True
                 continue
 
             # distance = ego_p.distance(obs_p)
@@ -93,6 +97,16 @@ class Collision(BaseMetric):
                     )
                 )
                 self.ignored_obstacles.add(obs.id)
+                collision_detected = True
+                continue
+
+            if ego_p.distance(obs_p) == 0.0:
+                # other collision
+                collision_detected = True
+                continue
+
+        if collision_detected:
+            raise OracleInterupt()
 
     def get_result(self) -> List[Violation]:
         return self.violations

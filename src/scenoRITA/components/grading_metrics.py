@@ -12,6 +12,7 @@ from .metrics import (
     Collision,
     FastAccel,
     HardBraking,
+    OracleInterupt,
     Speeding,
     UnsafeLaneChange,
     Violation,
@@ -53,9 +54,13 @@ def grade_scenario(
             for topic, msg, t in record_file.read_messages():
                 if topic == "/apollo/localization/pose":
                     has_localization = True
-                for metric in metrics:
-                    if topic in metric.topics:
-                        metric.on_new_message(topic, msg, t)
+                try:
+                    for metric in metrics:
+                        if topic in metric.topics:
+                            metric.on_new_message(topic, msg, t)
+                except OracleInterupt:
+                    # ignore the rest of the record
+                    break
             assert has_localization, "No localization in record"
             collision, speeding, unsafe_lane_change, fast_accel, hard_braking = metrics
 
