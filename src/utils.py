@@ -32,7 +32,7 @@ def set_up_gflags():
 
     # Genetic algorithm flags
     flags.DEFINE_integer("num_scenario", 10, "Number of scenarios to generate.")
-    flags.DEFINE_integer("num_hour", 12, "Number of hours to generate scenarios for.")
+    flags.DEFINE_float("num_hour", 12.0, "Number of hours to generate scenarios for.")
     flags.DEFINE_integer("min_obs", 5, "Minimum number of obstacles.")
     flags.DEFINE_integer("max_obs", 15, "Maximum number of obstacles.")
 
