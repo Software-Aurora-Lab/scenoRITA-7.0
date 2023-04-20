@@ -76,7 +76,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
             for x in range(len(containers))
         ]
         analyzer_processes = [
-            threading.Thread(
+            mp.Process(
                 target=analysis_worker,
                 args=(
                     map_service,
@@ -183,7 +183,7 @@ def main(argv):
     # loading map service
     logger.info(f"Loading map service for {FLAGS.map}")
     map_service = load_map_service(FLAGS.map)
-    logger.info(f"Map service loaded")
+    logger.info("Map service loaded")
 
     # genetic algorithm main loop
     scenario_generator = ScenarioGenerator(map_service)
