@@ -61,6 +61,8 @@ def player_worker(
             with open(target_output_path, "w") as fp:
                 fp.write("dry run")
         else:
+            if not container.is_running():
+                container.start_container()
             in_docker_path = Path(target_docker_dir, "input", f"{sce_id}")
             in_docker_output = Path(target_docker_dir, "records", f"{sce_id}")
             container.stop_ads_modules()
