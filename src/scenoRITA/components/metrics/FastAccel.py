@@ -41,23 +41,23 @@ class FastAccel(BaseMetric):
         ego_vy = msg.pose.linear_velocity.y
         ego_speed = math.sqrt(ego_vx**2 + ego_vy**2)
 
-        if self.prev_v is None or self.prev_t is None:
-            self.prev_v = ego_speed
-            self.prev_t = t
-            return
+        # if self.prev_v is None or self.prev_t is None:
+        #     self.prev_v = ego_speed
+        #     self.prev_t = t
+        #     return
 
-        ego_acceleration = (ego_speed - self.prev_v) / ((t - self.prev_t) / 1e9)
-        self.prev_v = ego_speed
-        self.prev_t = t
+        # ego_acceleration = (ego_speed - self.prev_v) / ((t - self.prev_t) / 1e9)
+        # self.prev_v = ego_speed
+        # self.prev_t = t
 
-        # ego_ax = msg.pose.linear_acceleration.x
-        # ego_ay = msg.pose.linear_acceleration.y
-        # ego_acceleration = math.sqrt(ego_ax**2 + ego_ay**2)
+        ego_ax = msg.pose.linear_acceleration.x
+        ego_ay = msg.pose.linear_acceleration.y
+        ego_acceleration = math.sqrt(ego_ax**2 + ego_ay**2)
 
-        # projection = ego_vx * ego_ax + ego_vy * ego_ay
+        projection = ego_vx * ego_ax + ego_vy * ego_ay
 
-        # if projection < 0:
-        #     ego_acceleration = -ego_acceleration
+        if projection < 0:
+            ego_acceleration = -ego_acceleration
 
         self.fitness = max(self.fitness, ego_acceleration)
 
