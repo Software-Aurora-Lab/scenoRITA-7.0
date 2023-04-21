@@ -208,9 +208,6 @@ def main(argv):
     ]
     evaluate_scenarios(containers, scenarios)
 
-    if FLAGS.dry_run:
-        return
-
     generation_counter = 1
     while perf_counter() < expected_end_time:
         logger.info(f"Generation {generation_counter}: start")
