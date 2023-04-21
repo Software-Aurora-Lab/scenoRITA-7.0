@@ -66,7 +66,7 @@ class GeneticOperators:
             # validate scenario
             obs_size = len(obstacles)
             obs_routes: Set[str] = set()
-            obs_static: Set[str] = set()
+            obs_static: Set[Point] = set()
             for obs in list(obstacles):
                 # validate obstacles far enough from ego car
                 ego_point, _ = self.map_service.get_lane_coord_and_heading(
@@ -89,16 +89,24 @@ class GeneticOperators:
                     f"{obs.initial_position.lane_id}-{obs.initial_position.index}-"
                     f"{obs.final_position.lane_id}-{obs.final_position.index}"
                 )
-                obs_initial = (
-                    f"{obs.initial_position.lane_id}-{obs.initial_position.index}"
+                obs_initial_lane = obs.initial_position.lane_id
+                lst = self.map_service.get_lane_central_curve_by_id(obs_initial_lane)
+                obs_xes, obs_yes = lst.xy
+                obs_initial_x, obs_initial_y = (
+                    obs_xes[obs.initial_position.index],
+                    obs_yes[obs.initial_position.index],
                 )
-                if obs.motion == ObstacleMotion.STATIC and obs_initial in obs_static:
-                    if obs_initial in obs_static:
-                        # obstacle's initial position overlaps
-                        #   with another static obstacle
-                        obstacles.remove(obs)
+                obs_initial_point = Point(obs_initial_x, obs_initial_y)
+
+                if obs.motion == ObstacleMotion.STATIC:
+                    for obs_i in obs_static:
+                        if obs_initial_point.distance(obs_i) < max(obs.length, 5):
+                            # obstacle's initial position is
+                            #   too close to another static obstacle
+                            obstacles.remove(obs)
+                            break
                     else:
-                        obs_static.add(obs_initial)
+                        obs_static.add(obs_initial_point)
                 elif obs.motion == ObstacleMotion.DYNAMIC:
                     if obs_route in obs_routes:
                         # obstacle's route overlaps with another obstacle
