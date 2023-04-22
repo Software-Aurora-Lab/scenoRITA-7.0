@@ -77,7 +77,7 @@ class Collision(BaseMetric):
             # distance = ego_p.distance(obs_p)
             distance = ego_front_l.distance(obs_p)
             self.obs_fitness[obs.id] = min(distance, self.obs_fitness[obs.id])
-            if distance == 0.0 and round(ego_speed, 3) > 0.000:
+            if distance == 0.0 and ego_speed > 0.000:
                 # collision ocurred
                 self.violations.append(
                     Violation(
