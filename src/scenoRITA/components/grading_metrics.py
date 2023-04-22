@@ -6,7 +6,6 @@ from typing import Dict, List, Optional, Tuple
 from cyber_record.record import Record
 
 from apollo.map_service import MapService
-from scenoRITA.representation import Scenario
 
 from .metrics import (
     Collision,
@@ -43,7 +42,7 @@ def get_grading_metrics(
 
 
 def grade_scenario(
-    scenario: Scenario, record: Path, map_service: MapService
+    scenario_id: str, record: Path, map_service: MapService
 ) -> Optional[GradingResult]:
     trial = 0
     while trial < 3:
@@ -80,7 +79,7 @@ def grade_scenario(
                 )
 
             return GradingResult(
-                scenario.get_id(),
+                scenario_id,
                 record,
                 fitness,
                 violations,

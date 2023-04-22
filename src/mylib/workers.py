@@ -118,7 +118,9 @@ def analysis_worker(
                 )
             )
         else:
-            grading_result = grade_scenario(scenario, target_input_file, map_service)
+            grading_result = grade_scenario(
+                scenario.get_id(), target_input_file, map_service
+            )
             if grading_result is None:
                 _logger.error(f"{sce_id}: grading failed after 3 retries.")
                 fallback_fitness = dict()
