@@ -7,7 +7,7 @@ import pandas as pd
 from apollo.map_service import load_map_service
 from mylib.clustering import cluster_df
 from scenoRITA.components.grading_metrics import GradingResult, grade_scenario
-
+from loguru import logger
 
 def analyze_scenario(
     map_name: str,
@@ -19,26 +19,30 @@ def analyze_scenario(
         record_path = task_queue.get()
         if record_path is None:
             break
+        logger.info(f"Processing {record_path[2].name}")
         result = grade_scenario(record_path[2].name, record_path[2], map_service)
+        logger.info(f"Finished {record_path[2].name}")
         if result:
             result_queue.put(result)
 
 
 def main() -> None:
-    exp_root = Path("/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_1")
+    autofuzz = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_3"
+    avfuzzer = "/home/yuqi/Desktop/Major_Revision/AV-FUZZER/12hr_1"
+    exp_root = Path(autofuzz)
     map_name = "borregas_ave"
 
     records = list(exp_root.rglob("*.00000"))
     violation_dfs = dict()
 
     with mp.Manager() as manager:
-        worker_num = 5
+        worker_num = mp.cpu_count()
         pool = mp.Pool(worker_num)
         task_queue = manager.Queue()
         result_queue = manager.Queue()
         for index, record_path in enumerate(records):
             task_queue.put((0, index, record_path))
-        for _ in range(5):
+        for _ in range(worker_num):
             task_queue.put(None)
 
         pool.starmap(
