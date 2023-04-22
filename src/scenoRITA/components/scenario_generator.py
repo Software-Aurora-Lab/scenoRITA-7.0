@@ -178,7 +178,7 @@ class ScenarioGenerator:
             if len(descendants) > 0:
                 target_lane_id = random.choice(list(descendants))
                 return EgoCar(
-                    PositionEstimate(lane_id, 0.0),  # at the end of the lane
+                    PositionEstimate(lane_id, 1.5),  # at the end of the lane
                     PositionEstimate(
                         target_lane_id,
                         float(int(self.map_service.get_lane_by_id(lane_id).length)),
