@@ -28,6 +28,7 @@ class LogParser:
         self.gen_select_tracker: Dict[str, List[datetime]] = defaultdict(list)
 
     def parse_line(self, time: datetime, line: str) -> None:
+        map_name = r"Map: (.*)"
         sce_gen_start = r"(gen_\d+_sce_\d+): generate start"
         sce_gen_end = r"(gen_\d+_sce_\d+): generate end"
         sce_play_start = r"(gen_\d+_sce_\d+): play start"
@@ -40,7 +41,9 @@ class LogParser:
         gen_select = r"(Generation \d+): selection done"
         gen_end = r"(Generation \d+): end"
 
-        if result := re.search(sce_gen_start, line):
+        if result := re.search(map_name, line):
+            self.map_name = result.groups()[0]
+        elif result := re.search(sce_gen_start, line):
             self.sce_generate_tracker[result.groups()[0]].append(time)
             self.sce_tracker[result.groups()[0]].append(time)
         elif result := re.search(sce_gen_end, line):
@@ -70,17 +73,7 @@ class LogParser:
         else:
             pass
 
-    def parse_map_name(self) -> None:
-        map_name = self.filename.resolve().parts[-1].split(".")[0]
-        self.map_name = " ".join([i.capitalize() for i in map_name.split("_")])
-        # map_part = self.filename.resolve().parts[-2]
-        # match = re.match("\d+_\d+_(.*)", map_part)
-        # if match:
-        #     map_name = match.groups()[0]
-        #     self.map_name = " ".join([i.capitalize() for i in map_name.split("_")])
-
     def parse(self) -> None:
-        self.parse_map_name()
 
         with open(self.filename, "r") as fp:
             while True:
