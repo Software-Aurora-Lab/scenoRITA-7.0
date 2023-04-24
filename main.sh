@@ -7,6 +7,7 @@ function check_code() {
 
 function clean() {
     rm -rf out
+    git clean -dfx data/maps
 }
 
 function main() {
