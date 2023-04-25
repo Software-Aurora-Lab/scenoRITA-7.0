@@ -25,6 +25,7 @@ class FastAccel(BaseMetric):
     MINIMUM_DURATION = 0.0
     THRESHOLD = 4.0
     TRUST_LOCALIZATION = False
+    FPS = 1
 
     def __init__(self, topics: List[str], map_service: MapService) -> None:
         super().__init__(topics, map_service)
@@ -34,6 +35,8 @@ class FastAccel(BaseMetric):
         self.prev_t: Optional[float] = None
 
     def on_new_message(self, topic: str, msg: Any, t: float) -> None:
+        if not self.should_process(t):
+            return
         ego_x = msg.pose.position.x
         ego_y = msg.pose.position.y
         ego_theta = msg.pose.heading
