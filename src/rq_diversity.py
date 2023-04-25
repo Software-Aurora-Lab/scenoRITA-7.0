@@ -7,8 +7,9 @@ from typing import Set, Tuple
 import matplotlib as mpl
 import numpy as np
 from cyber_record.record import Record
-from matplotlib import pyplot as plt
 from loguru import logger
+from matplotlib import pyplot as plt
+
 from apollo.map_service import load_map_service
 
 mpl.rcParams["figure.dpi"] = 900

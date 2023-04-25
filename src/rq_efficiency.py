@@ -6,6 +6,7 @@ from typing import Dict, List
 
 import numpy as np
 from loguru import logger
+
 from config import PROJECT_ROOT
 
 LOGGING_PREFIX_REGEX = (
@@ -160,7 +161,7 @@ def main():
         parser.print_stats()
         parsers.append(parser)
     logger.info("Processed all logs")
-    
+
     print("LaTex Table")
     for parser in parsers:
         parser.print_latex()
