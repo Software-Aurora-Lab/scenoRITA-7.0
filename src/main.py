@@ -13,6 +13,7 @@ from apollo.container import ApolloContainer
 from apollo.map_service import load_map_service
 from apollo.utils import change_apollo_map
 from config import APOLLO_ROOT, PROJECT_NAME
+from mylib.clustering import cluster
 from mylib.workers import analysis_worker, generator_worker, player_worker
 from scenoRITA.components.grading_metrics import GradingResult
 from scenoRITA.components.scenario_generator import ScenarioGenerator
@@ -229,6 +230,22 @@ def main(argv):
     logger.info("Stopping Apollo containers")
     for ctn in containers:
         ctn.rm_container()
+
+    # summarize results
+    violation_order = "CSFHU"
+    csv_files = sorted(
+        Path(get_output_dir(), "violations").glob("*.csv"),
+        key=lambda x: violation_order.index(x.name[0]),
+    )
+
+    for csv_file in csv_files:
+        violation_name = csv_file.name[:-4]
+        clustered_df = cluster(csv_file)
+        num_violation = len(clustered_df)
+        num_cluster = len(clustered_df["cluster"].unique())
+        logger.info(
+            f"{violation_name}: {num_violation} violations in {num_cluster} clusters"
+        )
 
 
 if __name__ == "__main__":
