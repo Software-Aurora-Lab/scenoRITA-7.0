@@ -18,7 +18,7 @@ class BaseMetric(ABC):
         if self.last_timestamp is None:
             self.last_timestamp = t
             return True
-        if (t - self.last_timestamp) > (1 / BaseMetric.FPS * 1e9):
+        if (t - self.last_timestamp) > (1 / self.FPS * 1e9):
             self.last_timestamp = t
             return True
         return False
