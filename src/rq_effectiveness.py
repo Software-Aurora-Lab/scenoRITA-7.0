@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import warnings
 from pathlib import Path
 from typing import List, Optional, Tuple
 
@@ -11,6 +12,8 @@ from scenoRITA.components.grading_metrics import GradingResult, grade_scenario
 
 AUTOFUZZ_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_3"
 AVFUZZER_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AV-FUZZER/12hr_1"
+
+warnings.filterwarnings("ignore")
 
 
 def analyze_scenario(
@@ -67,14 +70,14 @@ def main() -> None:
                 target_df.loc[len(target_df)] = [r.scenario_id] + list(
                     v.features.values()
                 )
-
-        for vdf in violation_dfs:
+        violation_order = "CSFHU"
+        violations = sorted(
+            violation_dfs.keys(), key=lambda x: violation_order.index(x[0])
+        )
+        for vdf in violations:
             df = violation_dfs[vdf]
             clustered_df = cluster_df(df)
             print(vdf, len(df), len(clustered_df["cluster"].unique()))
-
-        for vdf in violation_dfs:
-            print(violation_dfs[vdf])
 
 
 if __name__ == "__main__":
