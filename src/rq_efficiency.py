@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
-
+from loguru import logger
 from config import PROJECT_ROOT
 
 LOGGING_PREFIX_REGEX = (
@@ -152,9 +152,17 @@ class LogParser:
 
 
 def main():
+    parsers = []
     for log_file in Path(PROJECT_ROOT, "out").rglob("*.log"):
+        logger.info(f"Processing {log_file}")
         parser = LogParser(log_file)
         parser.parse()
+        parser.print_stats()
+        parsers.append(parser)
+    logger.info("Processed all logs")
+    
+    print("LaTex Table")
+    for parser in parsers:
         parser.print_latex()
 
 

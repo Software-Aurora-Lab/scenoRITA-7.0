@@ -8,7 +8,7 @@ import matplotlib as mpl
 import numpy as np
 from cyber_record.record import Record
 from matplotlib import pyplot as plt
-
+from loguru import logger
 from apollo.map_service import load_map_service
 
 mpl.rcParams["figure.dpi"] = 900
@@ -35,6 +35,7 @@ def get_color(alpha: float):
 
 
 def analysis_worker(record_path: Path) -> LocationAnalysis:
+    logger.info(f"Processing {record_path.name}")
     record_file = Record(record_path, "r")
     ego_coordinates: Set[Tuple[float, float]] = set()
     obs_coordinates: Set[Tuple[float, float]] = set()
@@ -156,8 +157,9 @@ if __name__ == "__main__":
     for map_name, record_root, approach_name in exp_records:
         if record_root != "" and Path(record_root).exists():
             start = time.perf_counter()
-            print(f"Plotting {map_name} {approach_name}")
+            logger.info(f"Plotting {map_name} {approach_name}")
             plot_experiment_heatmap(
                 map_name, Path(record_root), Path(f"{map_name}_{approach_name}.png")
             )
-            print(f"Took {time.perf_counter() - start:.2f} seconds")
+            minutes = (time.perf_counter() - start) / 60
+            logger.info(f"Finished {map_name} {approach_name} in {minutes:.2f} minutes")
