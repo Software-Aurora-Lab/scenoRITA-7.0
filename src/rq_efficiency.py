@@ -1,4 +1,3 @@
-import os
 import re
 from collections import defaultdict
 from datetime import datetime
@@ -6,6 +5,8 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
+
+from config import PROJECT_ROOT
 
 LOGGING_PREFIX_REGEX = (
     "^(?P<severity>[DIWEF])(?P<month>\d\d)(?P<day>\d\d) "
@@ -74,7 +75,6 @@ class LogParser:
             pass
 
     def parse(self) -> None:
-
         with open(self.filename, "r") as fp:
             while True:
                 line = fp.readline()
@@ -131,8 +131,8 @@ class LogParser:
         self.print_dict_stats("gen_eval", self.gen_eval_tracker)
         self.print_dict_stats("gen_select", self.gen_select_tracker)
 
-    def output_latex(self, fp):
-        fp.write("            \\textbf{" + self.map_name + "}")
+    def print_latex(self):
+        print(r"\textbf{" + self.map_name + "}", end="")
         time_list = [
             self.get_mean_value(tracker)
             for tracker in [
@@ -147,26 +147,15 @@ class LogParser:
         ]
         time_list.insert(3, np.sum(time_list[0:3]))
         for time in time_list:
-            fp.write(" & " + f"{time:.2f}")
-        fp.write(" \\\\\n")
+            print(" & " + f"{time:.2f}", end="")
+        print(r" \\")
 
 
 def main():
-    out_dir = Path("/home/cloudsky/Research/Apollo/scenoRITA-V3/out")
-    # log_files = [f"{out_dir}/{i}/scenoRITA_V3.log" for i in os.listdir(out_dir) if os.path.isdir(f"{out_dir}/{i}")]
-    log_dir = f"{out_dir}/logs"
-    log_files = [f"{log_dir}/{i}" for i in os.listdir(log_dir)]
-
-    # or
-    # log_files = ["/home/cloudsky/Research/Apollo/scenoRITA-V3/out/0417_211736_borregas_ave/scenoRITA_V3.log",
-    #              "/home/cloudsky/Research/Apollo/scenoRITA-V3/out/0418_101510_borregas_ave/scenoRITA_V3.log"]
-
-    with open(f"{out_dir}/out.txt", "w") as fp:
-        for log_file in log_files:
-            parser = LogParser(Path(log_file))
-            parser.parse()
-            parser.print_stats()
-            parser.output_latex(fp)
+    for log_file in Path(PROJECT_ROOT, "out").rglob("*.log"):
+        parser = LogParser(log_file)
+        parser.parse()
+        parser.print_latex()
 
 
 if __name__ == "__main__":

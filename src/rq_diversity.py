@@ -1,16 +1,18 @@
 import multiprocessing as mp
+import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Set, Tuple
+from typing import Set, Tuple
 
+import matplotlib as mpl
 import numpy as np
 from cyber_record.record import Record
 from matplotlib import pyplot as plt
-import matplotlib as mpl
 
 from apollo.map_service import load_map_service
-import time
-mpl.rcParams['figure.dpi'] = 900
+
+mpl.rcParams["figure.dpi"] = 900
+
 
 @dataclass(slots=True)
 class LocationAnalysis:
@@ -77,8 +79,8 @@ def plot_experiment_heatmap(map_name: str, record_root: Path, output_path: Path)
     k_split = 100
     x_ranges = np.linspace(min_x, max_x, k_split)
     y_ranges = np.linspace(min_y, max_y, k_split)
-    ego_heat_map_values = np.zeros((len(x_ranges)+1, len(y_ranges)+1))
-    obs_heat_map_values = np.zeros((len(x_ranges)+1, len(y_ranges)+1))
+    ego_heat_map_values = np.zeros((len(x_ranges) + 1, len(y_ranges) + 1))
+    obs_heat_map_values = np.zeros((len(x_ranges) + 1, len(y_ranges) + 1))
 
     with mp.Pool(mp.cpu_count()) as pool:
         results = pool.map(analysis_worker, record_root.rglob("*.00000"))
@@ -97,39 +99,35 @@ def plot_experiment_heatmap(map_name: str, record_root: Path, output_path: Path)
     max_value = np.max(ego_heat_map_values)
     min_alpha = 0.5
     for x1, x2 in zip(x_ranges[:-1], x_ranges[1:]):
-        x_index = np.searchsorted(x_ranges, (x1+x2)/2)
+        x_index = np.searchsorted(x_ranges, (x1 + x2) / 2)
         for y1, y2 in zip(y_ranges[:-1], y_ranges[1:]):
-            y_index = np.searchsorted(y_ranges, (y1+y2)/2)
+            y_index = np.searchsorted(y_ranges, (y1 + y2) / 2)
             alpha = ego_heat_map_values[x_index, y_index] / max_value
             color = get_color(alpha)
 
-            color = 'blue'
+            color = "blue"
             if alpha > 0.0:
                 # scale alpha to make it more visible
                 alpha = min_alpha + alpha * (1 - min_alpha)
 
-            plt.fill(
-                [x1, x1, x2, x2], [y1, y2, y2, y1], color=color, alpha=alpha
-            )
+            plt.fill([x1, x1, x2, x2], [y1, y2, y2, y1], color=color, alpha=alpha)
 
     # plot heat map for obstacles
     plt.subplot(1, 2, 2)
     max_value = np.max(obs_heat_map_values)
     for x1, x2 in zip(x_ranges[:-1], x_ranges[1:]):
-        x_index = np.searchsorted(x_ranges, (x1+x2)/2)
+        x_index = np.searchsorted(x_ranges, (x1 + x2) / 2)
         for y1, y2 in zip(y_ranges[:-1], y_ranges[1:]):
-            y_index = np.searchsorted(y_ranges, (y1+y2)/2)
+            y_index = np.searchsorted(y_ranges, (y1 + y2) / 2)
             alpha = obs_heat_map_values[x_index, y_index] / max_value
             color = get_color(alpha)
 
-            color = 'red'
+            color = "red"
             if alpha > 0.0:
                 # scale alpha to make it more visible
                 alpha = min_alpha + alpha * (1 - min_alpha)
 
-            plt.fill(
-                [x1, x1, x2, x2], [y1, y2, y2, y1], color=color, alpha=alpha
-            )
+            plt.fill([x1, x1, x2, x2], [y1, y2, y2, y1], color=color, alpha=alpha)
 
     # save figure
     plt.savefig(output_path, bbox_inches="tight")
@@ -141,13 +139,17 @@ if __name__ == "__main__":
     )
     autofuzz_path = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_1"
 
-    scenoRITA_sf_path = "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_130519_san_francisco"
-    scenoRITA_ba_path = "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_120346_borregas_ave"
+    scenoRITA_sf_path = (
+        "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_130519_san_francisco"
+    )
+    scenoRITA_ba_path = (
+        "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_213748_borregas_ave"
+    )
 
     exp_records = [
         # ("san_francisco", avfuzzer_path, "avfuzzer"),
         # ("borregas_ave", autofuzz_path, "autofuzz"),
-        ("san_francisco", scenoRITA_sf_path, "scenoRITA"),
+        # ("san_francisco", scenoRITA_sf_path, "scenoRITA"),
         ("borregas_ave", scenoRITA_ba_path, "scenoRITA"),
     ]
 
@@ -156,6 +158,6 @@ if __name__ == "__main__":
             start = time.perf_counter()
             print(f"Plotting {map_name} {approach_name}")
             plot_experiment_heatmap(
-                map_name, Path(record_root), f"{map_name}_{approach_name}.png"
+                map_name, Path(record_root), Path(f"{map_name}_{approach_name}.png")
             )
             print(f"Took {time.perf_counter() - start:.2f} seconds")

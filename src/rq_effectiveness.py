@@ -3,11 +3,15 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import pandas as pd
+from loguru import logger
 
 from apollo.map_service import load_map_service
 from mylib.clustering import cluster_df
 from scenoRITA.components.grading_metrics import GradingResult, grade_scenario
-from loguru import logger
+
+AUTOFUZZ_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_3"
+AVFUZZER_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AV-FUZZER/12hr_1"
+
 
 def analyze_scenario(
     map_name: str,
@@ -27,9 +31,7 @@ def analyze_scenario(
 
 
 def main() -> None:
-    autofuzz = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_3"
-    avfuzzer = "/home/yuqi/Desktop/Major_Revision/AV-FUZZER/12hr_1"
-    exp_root = Path(autofuzz)
+    exp_root = Path(AUTOFUZZ_EXPERIMENT_RECORDS)
     map_name = "borregas_ave"
 
     records = list(exp_root.rglob("*.00000"))
