@@ -105,5 +105,6 @@ class UnsafeLaneChange(BaseMetric):
                         },
                     )
                 )
+                break
 
         return results

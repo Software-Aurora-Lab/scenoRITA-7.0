@@ -104,6 +104,7 @@ class Speeding(BaseMetric):
                         },
                     )
                 )
+                break
         return result
 
     def get_fitness(self) -> float:
