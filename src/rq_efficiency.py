@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 import numpy as np
+from absl import app, flags
 from loguru import logger
 
 from config import PROJECT_ROOT
@@ -152,9 +153,10 @@ class LogParser:
         print(r" \\")
 
 
-def main():
+def main(args):
+    del args
     parsers = []
-    for log_file in Path(PROJECT_ROOT, "out").rglob("*.log"):
+    for log_file in Path(flags.FLAGS.dir).rglob("*.log"):
         logger.info(f"Processing {log_file}")
         parser = LogParser(log_file)
         parser.parse()
@@ -162,10 +164,13 @@ def main():
         parsers.append(parser)
     logger.info("Processed all logs")
 
-    print("LaTex Table")
+    print("LaTeX Table")
     for parser in parsers:
         parser.print_latex()
 
 
 if __name__ == "__main__":
-    main()
+    flags.DEFINE_string(
+        "dir", str(Path(PROJECT_ROOT, "out")), "Directory which contain log files"
+    )
+    app.run(main)
