@@ -4,14 +4,13 @@ from pathlib import Path
 from typing import List, Optional, Tuple
 
 import pandas as pd
+from absl import app, flags
 from loguru import logger
 
 from apollo.map_service import load_map_service
-from mylib.clustering import cluster_df
+from mylib.clustering import cluster
 from scenoRITA.components.grading_metrics import GradingResult, grade_scenario
-
-AUTOFUZZ_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_3"
-AVFUZZER_EXPERIMENT_RECORDS = "/home/yuqi/Desktop/Major_Revision/AV-FUZZER/12hr_1"
+from utils import PROJECT_ROOT
 
 warnings.filterwarnings("ignore")
 
@@ -33,13 +32,12 @@ def analyze_scenario(
             result_queue.put(result)
 
 
-def main() -> None:
-    exp_root = Path(AUTOFUZZ_EXPERIMENT_RECORDS)
-    map_name = "borregas_ave"
-
-    records = list(exp_root.rglob("*.00000"))
+def check_violations(root: Path, map_name: str) -> None:
+    if len(list(root.glob("*.csv"))) > 0:
+        # Already processed
+        return
+    records = list(root.rglob("*.00000"))
     violation_dfs = dict()
-
     with mp.Manager() as manager:
         worker_num = mp.cpu_count()
         pool = mp.Pool(worker_num)
@@ -70,15 +68,35 @@ def main() -> None:
                 target_df.loc[len(target_df)] = [r.scenario_id] + list(
                     v.features.values()
                 )
-        violation_order = "CSFHU"
-        violations = sorted(
-            violation_dfs.keys(), key=lambda x: violation_order.index(x[0])
-        )
-        for vdf in violations:
-            df = violation_dfs[vdf]
-            clustered_df = cluster_df(df)
-            print(vdf, len(df), len(clustered_df["cluster"].unique()))
+        for vdf in violation_dfs:
+            violation_dfs[vdf].to_csv(Path(root, f"{vdf}.csv"), index=False)
+
+
+def cluster_violations(root: Path) -> None:
+    violation_order = "CSFHU"
+    violation_csvs = list(root.glob("*.csv"))
+
+    violation_csvs.sort(key=lambda x: violation_order.index(x.name[0]))
+    for csv_file in violation_csvs:
+        violation_name = csv_file.name[:-4]
+        clustered_df = cluster(csv_file)
+        num_violations = len(clustered_df)
+        num_clusters = len(clustered_df["cluster"].unique())
+        print(violation_name, num_violations, num_clusters)
+        out_dir = Path(PROJECT_ROOT, "out")
+        out_dir.mkdir(exist_ok=True)
+        clustered_df.to_csv(Path(out_dir, f"{violation_name}_out.csv"))
+
+
+def main(args) -> None:
+    del args
+    root_dir = Path(flags.FLAGS.dir)
+    assert root_dir.exists(), f"{root_dir} does not exist"
+    check_violations(root_dir, flags.FLAGS.map)
+    cluster_violations(root_dir)
 
 
 if __name__ == "__main__":
-    main()
+    flags.DEFINE_string("dir", None, "Experiment root directory", required=True)
+    flags.DEFINE_string("map", None, "Map name", required=True)
+    app.run(main)
