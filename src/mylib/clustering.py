@@ -20,7 +20,14 @@ def cluster_df(df: pd.DataFrame) -> pd.DataFrame:
     sorted_distances = np.sort(distances, axis=0)[:, 1]
 
     i = np.arange(len(sorted_distances))
-    knee = KneeLocator(i, sorted_distances, S=1, curve="convex", direction="increasing")
+    knee = KneeLocator(
+        i,
+        sorted_distances,
+        S=0.5,
+        curve="convex",
+        direction="increasing",
+        interp_method="interp1d",
+    )
     if knee.knee:
         epsilon = sorted_distances[knee.knee]
     else:

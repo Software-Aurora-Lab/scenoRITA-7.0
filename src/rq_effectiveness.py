@@ -32,10 +32,11 @@ def analyze_scenario(
             result_queue.put(result)
 
 
-def check_violations(root: Path, map_name: str) -> None:
+def check_violations(root: Path, map_name: Optional[str]) -> None:
     if len(list(root.glob("*.csv"))) > 0:
         # Already processed
         return
+    assert map_name is not None, "Please specify map name"
     records = list(root.rglob("*.00000"))
     violation_dfs = dict()
     with mp.Manager() as manager:
@@ -98,5 +99,5 @@ def main(args) -> None:
 
 if __name__ == "__main__":
     flags.DEFINE_string("dir", None, "Experiment root directory", required=True)
-    flags.DEFINE_string("map", None, "Map name", required=True)
+    flags.DEFINE_string("map", None, "Map name", required=False)
     app.run(main)
