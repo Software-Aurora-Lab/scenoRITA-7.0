@@ -4,6 +4,7 @@ data/download/*
 !data/download/.gitkeep
 *.pickle
 src/test.py
+.vscode/
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,macos,visualstudiocode,linux
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,macos,visualstudiocode,linux
