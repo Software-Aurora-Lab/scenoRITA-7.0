@@ -22,6 +22,14 @@ if USING_LGSVL:
     APOLLO_VEHICLE_back_edge_to_center = 0.995
 
 
+def clean_apollo_logs():
+    data_dir = Path(APOLLO_ROOT, "data")
+    if data_dir.exists():
+        shutil.rmtree(data_dir)
+    for log_file in APOLLO_ROOT.glob("*.log.*"):
+        log_file.unlink()
+
+
 def change_apollo_map(map_name: str) -> None:
     """
     Change the map used by Apollo
