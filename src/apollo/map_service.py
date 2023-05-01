@@ -378,3 +378,9 @@ class MapService:
             if self.lane_boxes[obj[0]].lane_id not in result:
                 result.append(self.lane_boxes[obj[0]].lane_id)
         return result
+
+    def get_predecessors_for_lane(self, lane_id: str) -> List[str]:
+        return [x.id for x in self.lane_table[lane_id].predecessor_id]
+
+    def get_successors_for_lane(self, lane_id: str) -> List[str]:
+        return [x.id for x in self.lane_table[lane_id].successor_id]
