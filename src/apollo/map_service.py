@@ -98,6 +98,7 @@ class MapService:
         self.signal_boxes: Dict[BaseGeometry, str] = dict()
         self.stop_sign_boxes: Dict[BaseGeometry, str] = dict()
 
+        self.junction_lanes: List[str] = list()
         self.non_junction_lanes: List[str] = list()
 
         self.routing_graph = nx.DiGraph()
@@ -225,7 +226,8 @@ class MapService:
         return result
 
     def find_non_junction_lanes(self) -> None:
-        result = list()
+        self.junction_lanes = list()
+        self.non_junction_lanes = list()
         junction_overlap_ids = set()
         # find all overlap ids that are associated with junctions
         for junction in self.junction_table:
@@ -237,8 +239,9 @@ class MapService:
             lane_obj = self.lane_table[lane_id]
             lane_overlap_ids = set([x.id for x in lane_obj.overlap_id])
             if lane_overlap_ids & junction_overlap_ids == set():
-                result.append(lane_id)
-        self.non_junction_lanes = result
+                self.non_junction_lanes.append(lane_id)
+            else:
+                self.junction_lanes.append(lane_id)
 
     def build_routing_graph(self):
         # modules/routing/topo_creator/graph_creator.cc
