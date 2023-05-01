@@ -11,7 +11,7 @@ from loguru import logger
 
 from apollo.container import ApolloContainer
 from apollo.map_service import load_map_service
-from apollo.utils import change_apollo_map
+from apollo.utils import change_apollo_map, clean_apollo_logs
 from config import APOLLO_ROOT, PROJECT_NAME
 from mylib.clustering import cluster
 from mylib.workers import analysis_worker, generator_worker, player_worker
@@ -211,6 +211,7 @@ def main(argv):
 
     generation_counter = 1
     while perf_counter() < expected_end_time:
+        clean_apollo_logs()
         logger.info(f"Generation {generation_counter}: start")
         offsprings = genetic_operators.get_offsprings(scenarios)
         logger.info(f"Generation {generation_counter}: mut/cx done")
