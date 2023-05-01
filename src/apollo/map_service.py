@@ -384,3 +384,6 @@ class MapService:
 
     def get_successors_for_lane(self, lane_id: str) -> List[str]:
         return [x.id for x in self.lane_table[lane_id].successor_id]
+
+    def get_length_of_lane(self, lane_id: str) -> float:
+        return self.lane_table[lane_id].length
