@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Any, Dict, List, Optional, Set
 
-from shapely.geometry import LineString, Polygon
+from shapely.geometry import LineString, Point, Polygon
 
 from apollo.map_service import MapService
 from apollo.utils import (
@@ -66,6 +66,7 @@ class Collision(BaseMetric):
                 obs_x, obs_y, 0.0, obs.theta, obs.length, obs.width
             )
             obs_p = Polygon(obs_polygon)
+            obs_p_area = obs_p.area
 
             if obs_p.distance(ego_rear_l) == 0.0:
                 # rear end collision
@@ -79,23 +80,47 @@ class Collision(BaseMetric):
             self.obs_fitness[obs.id] = min(distance, self.obs_fitness[obs.id])
             if distance == 0.0 and ego_speed > 0.000:
                 # collision ocurred
-                self.violations.append(
-                    Violation(
-                        "Collision",
-                        {
-                            "ego_x": ego_x,
-                            "ego_y": ego_y,
-                            "ego_theta": ego_theta,
-                            "ego_speed": ego_speed,
-                            "obs_x": obs_x,
-                            "obs_y": obs_y,
-                            "obs_type": obs.type,
-                            "obs_theta": obs_theta,
-                            "obs_length": obs.length,
-                            "obs_width": obs.width,
-                        },
-                    )
+
+                # check if obs is in lane
+                obs_lane = self.map_service.get_nearest_lanes_with_heading(
+                    Point(obs_x, obs_y), obs_theta
                 )
+                obs_in_lane = False
+                for lane_id in obs_lane:
+                    lboundary, rboundary = self.map_service.get_lane_boundaries_by_id(
+                        lane_id
+                    )
+                    lx, ly = lboundary.xy
+                    rx, ry = rboundary.xy
+                    x_es = lx + rx[::-1]
+                    y_es = ly + ry[::-1]
+                    lane_polygon = Polygon([(x, y) for x, y in zip(x_es, y_es)])
+                    intersection_area = lane_polygon.intersection(obs_p).area
+
+                    # obs is in lane if the intersection area is close to obs_p_area
+                    if abs(intersection_area - obs_p_area) < 1e-3:
+                        obs_in_lane = True
+                        break
+
+                # add violation if obs is in lane
+                if obs_in_lane:
+                    self.violations.append(
+                        Violation(
+                            "Collision",
+                            {
+                                "ego_x": ego_x,
+                                "ego_y": ego_y,
+                                "ego_theta": ego_theta,
+                                "ego_speed": ego_speed,
+                                "obs_x": obs_x,
+                                "obs_y": obs_y,
+                                "obs_type": obs.type,
+                                "obs_theta": obs_theta,
+                                "obs_length": obs.length,
+                                "obs_width": obs.width,
+                            },
+                        )
+                    )
                 self.ignored_obstacles.add(obs.id)
                 collision_detected = True
                 continue
