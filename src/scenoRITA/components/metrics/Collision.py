@@ -82,9 +82,10 @@ class Collision(BaseMetric):
                 # collision ocurred
 
                 # check if obs is in lane
-                obs_lane = self.map_service.get_nearest_lanes_with_heading(
-                    Point(obs_x, obs_y), obs_theta
-                )
+                # obs_lane = self.map_service.get_nearest_lanes_with_heading(
+                #     Point(obs_x, obs_y), obs_theta
+                # )
+                obs_lane = self.map_service.get_lanes(Point(obs_x, obs_y), 10)
                 obs_in_lane = False
                 for lane_id in obs_lane:
                     lboundary, rboundary = self.map_service.get_lane_boundaries_by_id(
