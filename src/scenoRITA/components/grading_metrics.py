@@ -11,7 +11,7 @@ from .metrics import (
     Collision,
     FastAccel,
     HardBraking,
-    OracleInterupt,
+    OracleInterrupt,
     Speeding,
     UnsafeLaneChange,
     Violation,
@@ -57,7 +57,7 @@ def grade_scenario(
                     for metric in metrics:
                         if topic in metric.topics:
                             metric.on_new_message(topic, msg, t)
-                except OracleInterupt:
+                except OracleInterrupt:
                     # ignore the rest of the record
                     break
             assert has_localization, "No localization in record"

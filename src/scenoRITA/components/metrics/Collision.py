@@ -14,7 +14,7 @@ from modules.localization.proto.localization_pb2 import LocalizationEstimate
 from modules.perception.proto.perception_obstacle_pb2 import PerceptionObstacles
 
 from .BaseMetric import BaseMetric
-from .OracleInterupt import OracleInterupt
+from .OracleInterrupt import OracleInterrupt
 from .Violation import Violation
 
 
@@ -106,7 +106,7 @@ class Collision(BaseMetric):
                 continue
 
         if collision_detected:
-            raise OracleInterupt()
+            raise OracleInterrupt()
 
     def get_result(self) -> List[Violation]:
         return self.violations
