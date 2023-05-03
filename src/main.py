@@ -171,7 +171,9 @@ def main(argv):
     logger.info("Execution ID: " + FLAGS.execution_id)
     logger.info("Map: " + FLAGS.map)
     logger.info("Number of ADSes: " + str(FLAGS.num_adc))
+    logger.info("Scenario per Generation: " + str(FLAGS.num_scenario))
     logger.info("Length of experiment: {}h", FLAGS.num_hour)
+    logger.info("Obstacle Range: {} - {}", FLAGS.min_obs, FLAGS.max_obs)
 
     # change map used by Apollo
     logger.info("Changing map to " + FLAGS.map)
