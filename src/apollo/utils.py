@@ -5,7 +5,7 @@ from typing import List, Tuple
 
 from config import APOLLO_FLAGFILE, APOLLO_ROOT, MAPS_DIR, SUPPORTED_MAPS
 
-USING_LGSVL = True
+USING_LGSVL = False
 APOLLO_VEHICLE_LENGTH = 4.933
 """Length of default Apollo vehicle"""
 APOLLO_VEHICLE_WIDTH = 2.11
