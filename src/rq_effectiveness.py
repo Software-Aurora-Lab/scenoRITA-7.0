@@ -77,6 +77,9 @@ def cluster_violations(root: Path) -> None:
     violation_order = "CSFHU"
     violation_csvs = list(root.glob("*.csv"))
 
+    if len(violation_csvs) == 0:
+        print("No violations found")
+
     violation_csvs.sort(key=lambda x: violation_order.index(x.name[0]))
     for csv_file in violation_csvs:
         violation_name = csv_file.name[:-4]
