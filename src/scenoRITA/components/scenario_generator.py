@@ -169,41 +169,46 @@ class ScenarioGenerator:
         return result
 
     def generate_ego_car(self) -> EgoCar:
-        junction_lanes = self.map_service.junction_lanes
-        while True:
-            chosen_junction_lane = random.choice(junction_lanes)
-            predecessors = self.map_service.get_predecessors_for_lane(
-                chosen_junction_lane
-            )
-            successors = self.map_service.get_successors_for_lane(chosen_junction_lane)
-            if len(predecessors) == 0 or len(successors) == 0:
-                junction_lanes.remove(chosen_junction_lane)
-                continue
-            initial_lane_id = random.choice(predecessors)
-            final_lane_id = random.choice(successors)
-            return EgoCar(
-                PositionEstimate(initial_lane_id, 1.5),
-                PositionEstimate(
-                    final_lane_id, self.map_service.get_length_of_lane(final_lane_id)
-                ),
-            )
-
-        # lane_ids = self.map_service.non_junction_lanes
-        # routing_starts = self.map_service.routing_graph.nodes()
-        # options = list(set(lane_ids) & set(routing_starts))
-        # while True:
-        #     lane_id = random.choice(options)
-        #     descendants = nx.descendants(self.map_service.routing_graph, lane_id)
-        #     if len(descendants) > 0:
-        #         target_lane_id = random.choice(list(descendants))
-        #         return EgoCar(
-        #             PositionEstimate(lane_id, 1.5),  # at the end of the lane
-        #             PositionEstimate(
-        #                 target_lane_id,
-        #                 float(int(self.map_service.get_lane_by_id(lane_id).length)),
-        #             ),
-        #         )
-        #     options.remove(lane_id)
+        generate_junction_scenario = random.random() < 0.8
+        if generate_junction_scenario:
+            junction_lanes = self.map_service.junction_lanes
+            while True:
+                chosen_junction_lane = random.choice(junction_lanes)
+                predecessors = self.map_service.get_predecessors_for_lane(
+                    chosen_junction_lane
+                )
+                successors = self.map_service.get_successors_for_lane(
+                    chosen_junction_lane
+                )
+                if len(predecessors) == 0 or len(successors) == 0:
+                    junction_lanes.remove(chosen_junction_lane)
+                    continue
+                initial_lane_id = random.choice(predecessors)
+                final_lane_id = random.choice(successors)
+                return EgoCar(
+                    PositionEstimate(initial_lane_id, 1.5),
+                    PositionEstimate(
+                        final_lane_id,
+                        self.map_service.get_length_of_lane(final_lane_id),
+                    ),
+                )
+        else:
+            lane_ids = self.map_service.non_junction_lanes
+            routing_starts = self.map_service.routing_graph.nodes()
+            options = list(set(lane_ids) & set(routing_starts))
+            while True:
+                lane_id = random.choice(options)
+                descendants = nx.descendants(self.map_service.routing_graph, lane_id)
+                if len(descendants) > 0:
+                    target_lane_id = random.choice(list(descendants))
+                    return EgoCar(
+                        PositionEstimate(lane_id, 1.5),  # at the end of the lane
+                        PositionEstimate(
+                            target_lane_id,
+                            float(int(self.map_service.get_lane_by_id(lane_id).length)),
+                        ),
+                    )
+                options.remove(lane_id)
 
     def generate_scenario(
         self, gen_id: int, sce_id: int, min_obs: int, max_obs: int
