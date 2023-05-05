@@ -138,6 +138,7 @@ class ApolloContainer:
 
     def start_replay(self, filename: str):
         # cyber_recorder play -f <file>
+        # TODO: add --log_dir=/apollo/data/log
         cyber_recorder = "/apollo/bazel-bin/cyber/tools/cyber_recorder/cyber_recorder"
         cmd = f"{cyber_recorder} play -f {filename}"
         self.exec(cmd, detached=True)
@@ -148,6 +149,7 @@ class ApolloContainer:
 
     def start_recorder(self, filename: str):
         # cyber_recorder record -o <file>
+        # TODO: add --log_dir=/apollo/data/log
         cyber_recorder = "/apollo/bazel-bin/cyber/tools/cyber_recorder/cyber_recorder"
         cmd = f"{cyber_recorder} record -a -o {filename}"
         self.exec(cmd, detached=True)
