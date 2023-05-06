@@ -16,7 +16,7 @@ APOLLO_RELEASE_NAME = "apollo-7.0.1"
 SIM_CONTROL_RELEASE = (
     "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.1.zip"
 )
-SIM_CONTROL_RELEASE_NAME = "sim_control_standalone-7.0.0"
+SIM_CONTROL_RELEASE_NAME = "sim_control_standalone-7.0.1"
 
 # Map Configurations
 MAPS_DIR = Path(DATA_DIR, "maps")
