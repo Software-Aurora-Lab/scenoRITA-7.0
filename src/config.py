@@ -14,7 +14,7 @@ APOLLO_FLAGFILE = Path(APOLLO_ROOT, "modules", "common", "data", "global_flagfil
 APOLLO_RELEASE = "https://github.com/YuqiHuai/apollo/archive/refs/tags/v7.0.1.zip"
 APOLLO_RELEASE_NAME = "apollo-7.0.1"
 SIM_CONTROL_RELEASE = (
-    "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.0.zip"
+    "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.1.zip"
 )
 SIM_CONTROL_RELEASE_NAME = "sim_control_standalone-7.0.0"
 
