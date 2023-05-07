@@ -79,7 +79,7 @@ class Collision(BaseMetric):
             distance = ego_front_l.distance(obs_p)
             self.obs_fitness[obs.id] = min(distance, self.obs_fitness[obs.id])
             if distance == 0.0 and ego_speed > 0.000:
-                # collision ocurred
+                # front-end collision ocurred
 
                 # check if obs is in lane
                 # obs_lane = self.map_service.get_nearest_lanes_with_heading(
@@ -122,6 +122,8 @@ class Collision(BaseMetric):
                             },
                         )
                     )
+                else:
+                    self.obs_fitness[obs.id] = float("inf")
                 self.ignored_obstacles.add(obs.id)
                 collision_detected = True
                 continue
@@ -129,6 +131,7 @@ class Collision(BaseMetric):
             if ego_p.distance(obs_p) == 0.0:
                 # other collision
                 collision_detected = True
+                self.obs_fitness[obs.id] = float("inf")
                 continue
 
         if collision_detected:
