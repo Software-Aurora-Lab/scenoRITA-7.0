@@ -122,17 +122,21 @@ class GeneticOperators:
 
         return result
 
-    def _validate_obstacle(self, obstacle: Obstacle) -> None:
+    def _validate_obstacle(self, obstacle: Obstacle) -> bool:
         """
         Validates an obstacle's constraints.
             Corrects the obstacle in place if necessary.
         :param obstacle: Obstacle to validate.
+        :return: True if the obstacle was changed, False otherwise.
         """
+        change_made = False
         for attribute in ["speed", "width", "length", "height"]:
             min_value, max_value = ObstacleConstraints[obstacle.type][attribute]
             current_value = obstacle.__getattribute__(attribute)
             if current_value < min_value or current_value > max_value:
                 obstacle.__setattr__(attribute, random.uniform(min_value, max_value))
+                change_made = True
+        return change_made
 
     def crossover(self, lhs: Obstacle, rhs: Obstacle) -> None:
         """

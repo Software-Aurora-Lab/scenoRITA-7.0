@@ -296,6 +296,21 @@ class ScenarioGenerator:
             sequence_num += 1
         return result
 
+    def get_perception_obstacle_type(
+        self, _type: ObstacleType
+    ) -> (
+        PerceptionObstacle.VEHICLE
+        | PerceptionObstacle.BICYCLE
+        | PerceptionObstacle.PEDESTRIAN
+    ):
+        if _type == ObstacleType.VEHICLE:
+            return PerceptionObstacle.VEHICLE
+        elif _type == ObstacleType.BICYCLE:
+            return PerceptionObstacle.BICYCLE
+        elif _type == ObstacleType.PEDESTRIAN:
+            return PerceptionObstacle.PEDESTRIAN
+        raise Exception("Unknown obstacle type")
+
     def generate_perception_obstacle(
         self,
         obstacle: Obstacle,
@@ -399,6 +414,7 @@ class ScenarioGenerator:
                     x[i], y[i], 0.0, yaw[i], obstacle.length, obstacle.width
                 )
             ]
+            obs_type = self.get_perception_obstacle_type(obstacle.type)
             obstacle_messages.append(
                 PerceptionObstacle(
                     id=obstacle.id,
@@ -409,7 +425,7 @@ class ScenarioGenerator:
                     height=obstacle.height,
                     velocity=_velocity,
                     acceleration=_acceleration,
-                    type=PerceptionObstacle.VEHICLE,
+                    type=obs_type,
                     timestamp=reference_time + t[i],
                     tracking_time=1.0,
                     polygon_point=polygon_points,
