@@ -13,13 +13,13 @@ san_mateo() {
 sunnyvale_loop() {
     poetry run python src/main.py \
         --map="sunnyvale_loop" \
-        --min_obs=10 --max_obs=20
+        --min_obs=20 --max_obs=30
 }
 
 san_francisco() {
     poetry run python src/main.py \
         --map="san_francisco" \
-        --min_obs=10 --max_obs=20
+        --min_obs=20 --max_obs=30
 }
 
 borregas_ave
