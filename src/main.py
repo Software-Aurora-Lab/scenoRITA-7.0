@@ -224,7 +224,7 @@ def main(argv):
         logger.info(f"Generation {generation_counter}: end")
 
         generation_counter += 1
-        if FLAGS.dry_run and generation_counter == 5:
+        if FLAGS.dry_run:
             break
 
     total_hour = (perf_counter() - ga_start_time) / 3600
