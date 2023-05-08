@@ -70,6 +70,7 @@ def cut(line: LineString, distance: float):
                 LineString(coords[:i] + [(cp.x, cp.y)]),
                 LineString([(cp.x, cp.y)] + coords[i:]),
             ]
+    return [LineString(line)]
 
 
 class ScenarioGenerator:
