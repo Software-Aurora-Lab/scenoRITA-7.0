@@ -186,8 +186,13 @@ class ScenarioGenerator:
                     continue
                 initial_lane_id = random.choice(predecessors)
                 final_lane_id = random.choice(successors)
+                initial_lane_length = self.map_service.get_length_of_lane(
+                    initial_lane_id
+                )
                 return EgoCar(
-                    PositionEstimate(initial_lane_id, 1.5),
+                    PositionEstimate(
+                        initial_lane_id, max(1.5, initial_lane_length - 10.0)
+                    ),
                     PositionEstimate(
                         final_lane_id,
                         self.map_service.get_length_of_lane(final_lane_id),
