@@ -132,6 +132,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
         for scenario in scenarios:
             if scenario.get_id() not in results:
                 # scenario was not evaluated
+                logger.error(f"{scenario.get_id()} was not evaluated")
                 continue
             grading_result = results[scenario.get_id()]
             for obs in scenario.obstacles:
