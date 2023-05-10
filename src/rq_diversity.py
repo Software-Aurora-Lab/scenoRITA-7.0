@@ -142,7 +142,7 @@ if __name__ == "__main__":
     autofuzz_path = "/home/yuqi/Desktop/Major_Revision/AutoFuzz/1hr_1"
 
     scenoRITA_sf_path = (
-        "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_130519_san_francisco"
+        "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0507_165932_san_francisco"
     )
     scenoRITA_ba_path = (
         "/home/yuqi/ResearchWorkspace/scenoRITA-V3/out/0424_213748_borregas_ave"
@@ -151,8 +151,8 @@ if __name__ == "__main__":
     exp_records = [
         # ("san_francisco", avfuzzer_path, "avfuzzer"),
         # ("borregas_ave", autofuzz_path, "autofuzz"),
-        # ("san_francisco", scenoRITA_sf_path, "scenoRITA"),
-        ("borregas_ave", scenoRITA_ba_path, "scenoRITA"),
+        ("san_francisco", scenoRITA_sf_path, "scenoRITA"),
+        # ("borregas_ave", scenoRITA_ba_path, "scenoRITA"),
     ]
 
     for map_name, record_root, approach_name in exp_records:
