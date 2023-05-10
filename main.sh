@@ -10,6 +10,11 @@ function clean() {
     git clean -dfx data/maps
 }
 
+function reset_docker() {
+    docker stop $(docker ps -aq)
+    docker rm $(docker ps -aq)
+}
+
 function main() {
     if [ "$#" -eq 0 ]; then
         check_code
@@ -22,6 +27,9 @@ function main() {
             ;;
         "clean")
             clean
+            ;;
+        "reset_docker")
+            reset_docker
             ;;
         *)
             check_code
