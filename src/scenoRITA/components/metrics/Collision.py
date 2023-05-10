@@ -96,9 +96,13 @@ class Collision(BaseMetric):
                     x_es = lx + rx[::-1]
                     y_es = ly + ry[::-1]
                     lane_polygon = Polygon([(x, y) for x, y in zip(x_es, y_es)])
-                    intersection_area = lane_polygon.intersection(obs_p).area
 
-                    # obs is in lane if the intersection area is close to obs_p_area
+                    # if there is no intersection, obs is not in this lane
+                    if not lane_polygon.intersects(obs_p):
+                        continue
+
+                    # if there is intersection, check if the obs is fully in lane
+                    intersection_area = lane_polygon.intersection(obs_p).area
                     if abs(intersection_area - obs_p_area) < 1e-3:
                         obs_in_lane = True
                         break
