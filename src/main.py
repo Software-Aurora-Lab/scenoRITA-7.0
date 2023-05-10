@@ -130,6 +130,9 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
 
         # update fitness values
         for scenario in scenarios:
+            if scenario.get_id() not in results:
+                # scenario was not evaluated
+                continue
             grading_result = results[scenario.get_id()]
             for obs in scenario.obstacles:
                 obs.fitness.values = grading_result.fitnesses[obs.id]
@@ -253,4 +256,8 @@ def main(argv):
 
 if __name__ == "__main__":
     set_up_gflags()
-    app.run(main)
+    try:
+        app.run(main)
+    except Exception as e:
+        logger.exception(e)
+        raise e
