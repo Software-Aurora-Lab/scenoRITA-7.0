@@ -22,7 +22,10 @@ from scenoRITA.representation import Scenario
 from utils import generate_id, get_output_dir, set_up_gflags, set_up_logging
 
 
-def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenario]):
+def evaluate_scenarios(
+    containers: List[ApolloContainer], scenarios: List[Scenario]
+) -> int:
+    num_evaluated = 0
     num_workers = 5
     multi_process_generate = False
     with mp.Manager() as manager:
@@ -134,6 +137,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                 # scenario was not evaluated
                 logger.error(f"{scenario.get_id()} was not evaluated")
                 continue
+            num_evaluated += 1
             grading_result = results[scenario.get_id()]
             for obs in scenario.obstacles:
                 obs.fitness.values = grading_result.fitnesses[obs.id]
@@ -153,6 +157,7 @@ def evaluate_scenarios(containers: List[ApolloContainer], scenarios: List[Scenar
                 with open(violation_csv, "a") as f:
                     feature_row = ",".join(map(str, violation.features.values()))
                     f.write(f"{sce_id},{feature_row}\n")
+    return num_evaluated
 
 
 def start_containers(num_adc: int) -> List[ApolloContainer]:
@@ -216,12 +221,25 @@ def main(argv):
     evaluate_scenarios(containers, scenarios)
 
     generation_counter = 1
+    failure_counter = 0
     while perf_counter() < expected_end_time:
         clean_apollo_logs()
         logger.info(f"Generation {generation_counter}: start")
         offsprings = genetic_operators.get_offsprings(scenarios)
         logger.info(f"Generation {generation_counter}: mut/cx done")
-        evaluate_scenarios(containers, offsprings)
+        num_evaluated = evaluate_scenarios(containers, offsprings)
+        if num_evaluated < len(offsprings):
+            logger.error(
+                f"Generation {generation_counter}: not all scenarios evaluated"
+            )
+            failure_counter += 1
+            if failure_counter >= 3:
+                logger.error(f"Generation {generation_counter}: Restarting containers.")
+                for ctn in containers:
+                    ctn.rm_container()
+                    ctn.start_container()
+        else:
+            failure_counter = 0
         logger.info(f"Generation {generation_counter}: evaluation done")
         scenarios = genetic_operators.select(scenarios, offsprings)
         logger.info(f"Generation {generation_counter}: selection done")
