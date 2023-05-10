@@ -11,17 +11,30 @@
 
 ## Running scenoRITA
 
-1. Install Apollo v7.0.0 via command
+0. Install prerequisites needed using scripts under `data/scripts/install`.
+
+1. Install project dependencies via command
+   ```
+   poetry install
+   ```
+
+2. Install Apollo v7.0.0 via command
    ```
    poetry run python src/install.py
    ```
    this command will download a release version of Apollo v7.0.0 and compile necessary modules.
 
-2. Run scenoRITA via command
+3. Run scenoRITA via command
    ```
    poetry run python src/main.py
    ```
    
    > if you want to run scenoRITA on different maps (e.g., san_mateo), you can add `--map=san_mateo` to command.
+
+4. To reproduce experiments described in the paper (e.g., running scenoRITA on San Francisco), run
+   ```
+   source run_experiments.sh
+   san_francisco
+   ```
 
 After running the command, the output of scenoRITA will be stored under `out/{execution_id}` and you can find violations detected under `out/{execution_id}/violations`
