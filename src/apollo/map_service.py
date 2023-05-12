@@ -314,7 +314,7 @@ class MapService:
         assert (
             lane_id in self.lane_table.keys()
         ), f"lane_id {repr(lane_id)} does not exist"
-        assert self.get_lane_by_id(lane_id).length > s
+        assert self.get_lane_by_id(lane_id).length >= s
 
         cv = self.get_lane_by_id(lane_id).central_curve
         cv_points = cv.segment[0].line_segment
