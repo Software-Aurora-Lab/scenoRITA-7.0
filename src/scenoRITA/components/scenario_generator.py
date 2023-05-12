@@ -184,7 +184,12 @@ class ScenarioGenerator:
                 if len(predecessors) == 0 or len(successors) == 0:
                     junction_lanes.remove(chosen_junction_lane)
                     continue
+
                 initial_lane_id = random.choice(predecessors)
+                while self.map_service.get_lane_by_id(initial_lane_id).length < 5:
+                    predecessors.remove(initial_lane_id)
+                    initial_lane_id = random.choice(predecessors)
+
                 final_lane_id = random.choice(successors)
                 initial_lane_length = self.map_service.get_length_of_lane(
                     initial_lane_id
