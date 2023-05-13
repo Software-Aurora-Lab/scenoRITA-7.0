@@ -186,9 +186,23 @@ class ScenarioGenerator:
                     continue
 
                 initial_lane_id = random.choice(predecessors)
-                while self.map_service.get_lane_by_id(initial_lane_id).length < 5:
+                has_valid_predecessor = False
+                k_min_lane_length = 5.0
+                while True:
                     predecessors.remove(initial_lane_id)
+                    if len(predecessors) == 0:
+                        break
                     initial_lane_id = random.choice(predecessors)
+                    if (
+                        self.map_service.get_lane_by_id(initial_lane_id).length
+                        >= k_min_lane_length
+                    ):
+                        has_valid_predecessor = True
+                        break
+
+                if not has_valid_predecessor:
+                    junction_lanes.remove(chosen_junction_lane)
+                    continue
 
                 final_lane_id = random.choice(successors)
                 initial_lane_length = self.map_service.get_length_of_lane(
@@ -209,11 +223,14 @@ class ScenarioGenerator:
             options = list(set(lane_ids) & set(routing_starts))
             while True:
                 lane_id = random.choice(options)
+                lane_length = self.map_service.get_length_of_lane(lane_id)
                 descendants = nx.descendants(self.map_service.routing_graph, lane_id)
                 if len(descendants) > 0:
                     target_lane_id = random.choice(list(descendants))
                     return EgoCar(
-                        PositionEstimate(lane_id, 1.5),  # at the end of the lane
+                        PositionEstimate(
+                            lane_id, min(1.5, lane_length)
+                        ),  # at the end of the lane
                         PositionEstimate(
                             target_lane_id,
                             float(int(self.map_service.get_lane_by_id(lane_id).length)),
