@@ -73,20 +73,19 @@ def compile_apollo():
 
 def install_sim_control_standalone():
     target_directory = Path(APOLLO_ROOT, "modules", "sim_control_standalone")
-    if target_directory.exists():
-        logger.info("Sim control standalone already installed")
-        return
     sim_control_release = Path(DOWNLOAD_DIR, "sim_control_standalone.zip")
 
-    logger.info(f"Downloading sim control standalone to {sim_control_release}")
+    if not sim_control_release.exists():
+        logger.info(f"Downloading sim control standalone to {sim_control_release}")
 
-    download_cmd = f"wget -O {sim_control_release} {SIM_CONTROL_RELEASE}"
-    print(download_cmd)
-    subprocess.run(download_cmd, shell=True)
+        download_cmd = f"wget -O {sim_control_release} {SIM_CONTROL_RELEASE}"
+        print(download_cmd)
+        subprocess.run(download_cmd, shell=True)
 
-    logger.info("Extracting sim control standalone")
-    shutil.unpack_archive(sim_control_release, DATA_DIR, "zip")
-    shutil.move(Path(DATA_DIR, SIM_CONTROL_RELEASE_NAME), target_directory)
+    if not target_directory.exists():
+        logger.info("Extracting sim control standalone")
+        shutil.unpack_archive(sim_control_release, DATA_DIR, "zip")
+        shutil.move(Path(DATA_DIR, SIM_CONTROL_RELEASE_NAME), target_directory)
 
     logger.info("Compiling sim control standalone")
     ctn = ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_installer")
