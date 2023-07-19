@@ -185,14 +185,13 @@ class ScenarioGenerator:
                     junction_lanes.remove(chosen_junction_lane)
                     continue
 
-                initial_lane_id = random.choice(predecessors)
                 has_valid_predecessor = False
                 k_min_lane_length = 5.0
                 while True:
-                    predecessors.remove(initial_lane_id)
                     if len(predecessors) == 0:
                         break
                     initial_lane_id = random.choice(predecessors)
+                    predecessors.remove(initial_lane_id)
                     if (
                         self.map_service.get_lane_by_id(initial_lane_id).length
                         >= k_min_lane_length
