@@ -1,4 +1,10 @@
-# scenoRITA for Apollo v7.0.0
+# scenoRITA for Baidu Apollo v7.0.0
+
+<a href="https://zenodo.org/10.5281/zenodo.8231346">
+   <img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8231345-blue?style=flat-square&logo=doi"/>
+</a>
+
+This is an implementation of scenoRITA that supports Baidu Apollo v7.0.0. Please find the most up-to-date version with updates and fixes at out [GitHub repository](https://github.com/Software-Aurora-Lab/scenoRITA-7.0/).
 
 ## Prerequisites
 
