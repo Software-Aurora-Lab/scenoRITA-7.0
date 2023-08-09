@@ -4,7 +4,7 @@
    <img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8231345-blue?style=flat-square&logo=doi"/>
 </a>
 
-This is an implementation of scenoRITA that supports Baidu Apollo v7.0.0. Please find the most up-to-date version with updates and fixes at our [GitHub repository](https://github.com/Software-Aurora-Lab/scenoRITA-7.0/).
+This is an implementation of scenoRITA that supports Baidu Apollo v7.0.0. Please find the most up-to-date version with updates and fixes in our [GitHub repository](https://github.com/Software-Aurora-Lab/scenoRITA-7.0/).
 
 ## Prerequisites
 
