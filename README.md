@@ -1,6 +1,6 @@
 # scenoRITA for Baidu Apollo v7.0.0
 
-<a href="https://zenodo.org/10.5281/zenodo.8231346">
+<a href="https://zenodo.org/doi/10.5281/zenodo.8231345">
    <img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.8231345-blue?style=flat-square&logo=doi"/>
 </a>
 
