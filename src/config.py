@@ -12,7 +12,7 @@ DOCKER_CMD = "docker"
 APOLLO_ROOT = Path(DATA_DIR, "apollo")
 APOLLO_FLAGFILE = Path(APOLLO_ROOT, "modules", "common", "data", "global_flagfile.txt")
 APOLLO_RELEASE = "https://github.com/YuqiHuai/apollo/archive/refs/tags/v7.0.1.zip"
-APOLLO_RELEASE_NAME = "apollo-7.0.1"
+APOLLO_RELEASE_NAME = "BaiduApollo-7.0.1"
 SIM_CONTROL_RELEASE = (
     "https://github.com/YuqiHuai/sim_control_standalone/archive/refs/tags/v7.0.1.zip"
 )
