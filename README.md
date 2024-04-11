@@ -44,3 +44,24 @@ This is an implementation of scenoRITA that supports Baidu Apollo v7.0.0. Please
    ```
 
 After running the command, the output of scenoRITA will be stored under `out/{execution_id}` and you can find violations detected under `out/{execution_id}/violations`
+
+## Citing
+
+If you use this project in your work, please consider citing the following work
+
+```
+@ARTICLE{scenoRITA,
+  author={Huai, Yuqi and Almanee, Sumaya and Chen, Yuntianyi and Wu, Xiafa and Chen, Qi Alfred and Garcia, Joshua},
+  journal={IEEE Transactions on Software Engineering}, 
+  title={scenoRITA: Generating Diverse, Fully Mutable, Test Scenarios for Autonomous Vehicle Planning}, 
+  year={2023},
+  volume={49},
+  number={10},
+  pages={4656-4676},
+  keywords={Automobiles;Accidents;Safety;Trajectory;Test pattern generators;Manuals;Web and internet services;Embedded/cyber-physical systems;search-based software engineering;software testing},
+  doi={10.1109/TSE.2023.3309610}}
+```
+
+## Known Issues
+
+1. CPU overclocking has caused segmentation faults, freezing, and failure to build Apollo. See [DoppelTest/Issue#5](https://github.com/Software-Aurora-Lab/DoppelTest/issues/5). Many thanks to Lejin Li from Kyushu University for the investigation.
