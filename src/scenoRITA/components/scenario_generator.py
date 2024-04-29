@@ -232,7 +232,7 @@ class ScenarioGenerator:
                         ),  # at the end of the lane
                         PositionEstimate(
                             target_lane_id,
-                            float(int(self.map_service.get_lane_by_id(lane_id).length)),
+                            float(int(self.map_service.get_lane_by_id(target_lane_id).length)),
                         ),
                     )
                 options.remove(lane_id)
