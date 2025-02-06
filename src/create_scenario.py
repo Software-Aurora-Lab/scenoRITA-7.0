@@ -5,11 +5,20 @@ from apollo.map_service import load_map_service
 import time
 from typing import Tuple
 from datetime import datetime
-from scenoRITA.representation import EgoCar, Obstacle, Scenario, ObstacleMotion, ObstacleType, ObstaclePosition, PositionEstimate
+from scenoRITA.representation import (
+    EgoCar,
+    Obstacle,
+    Scenario,
+    ObstacleMotion,
+    ObstacleType,
+    ObstaclePosition,
+    PositionEstimate,
+)
 from cyber_record.record import Record
 
 from scenoRITA.representation import EgoCar, Obstacle, Scenario
 from scenoRITA.components.scenario_generator import ScenarioGenerator
+
 
 def get_initial_pose_from_record(record_filename: str) -> Tuple[float, float, float]:
     for _, msg, _ in Record(record_filename).read_messages("/apollo/localization/pose"):
@@ -24,7 +33,7 @@ def run_scenario(
     scenario_length: int,
     initial_x: float,
     initial_y: float,
-    initial_heading: float
+    initial_heading: float,
 ):
     assert container.is_running(), "Container is not running"
     container.stop_ads_modules()
@@ -44,9 +53,28 @@ ego = EgoCar(
     initial_position=PositionEstimate(lane_id="lane_27", s=35),
     final_position=PositionEstimate(lane_id="lane_29", s=10),
 )
-obstacle = Obstacle(
+obstacle1 = Obstacle(
     id=1,
     initial_position=ObstaclePosition(lane_id="lane_29", index=0),
+    final_position=ObstaclePosition(lane_id="lane_29", index=10),
+    type=ObstacleType.VEHICLE,
+    speed=10,
+    width=1.5,
+    length=2,
+    height=1.5,
+    motion=ObstacleMotion.DYNAMIC,
+)
+
+obstacle2 = Obstacle(
+    id=2,
+    initial_position=ObstaclePosition(
+        lane_id="",
+        index=0,
+        x_coord=587049.4405059814,
+        y_coord=4141529.948238373,
+        z_coord=0.0,
+        heading=1.3156606295479158,
+    ),
     final_position=ObstaclePosition(lane_id="lane_29", index=0),
     type=ObstacleType.VEHICLE,
     speed=10,
@@ -55,25 +83,25 @@ obstacle = Obstacle(
     height=1.5,
     motion=ObstacleMotion.STATIC,
 )
+
 scenario = Scenario(
-    generation_id=0,
-    scenario_id=0,
-    ego_car=ego,
-    obstacles=[obstacle]
+    generation_id=0, scenario_id=0, ego_car=ego, obstacles=[obstacle1, obstacle2]
 )
 
 map_service = load_map_service("borregas_ave")
 scenario_generator = ScenarioGenerator(map_service)
 
-scenario_length = 30 # seconds
+scenario_length = 30  # seconds
 input_record = "scenario.input.00000"
 scenario_generator.write_scenario_to_file(
-    scenario=scenario, 
-    filename=input_record, scenario_length=scenario_length, perception_frequency=10)
+    scenario=scenario,
+    filename=input_record,
+    scenario_length=scenario_length,
+    perception_frequency=10,
+)
 
 initial_position, initial_heading = map_service.get_lane_coord_and_heading(
-    ego.initial_position.lane_id,
-    ego.initial_position.s
+    ego.initial_position.lane_id, ego.initial_position.s
 )
 initial_x, initial_y = initial_position.x, initial_position.y
 
@@ -87,6 +115,14 @@ print(f"Dreamview running at {ctn.dreamview_url}")
 target_docker_dir = Path(f"/{PROJECT_NAME}")
 in_docker_path = Path(target_docker_dir, input_record)
 in_docker_output = Path(target_docker_dir, datetime.now().strftime("%Y%m%d%H%M%S"))
-run_scenario(ctn, in_docker_path, in_docker_output, scenario_length, initial_x, initial_y, initial_heading)
+run_scenario(
+    ctn,
+    in_docker_path,
+    in_docker_output,
+    scenario_length,
+    initial_x,
+    initial_y,
+    initial_heading,
+)
 
 print("Done")

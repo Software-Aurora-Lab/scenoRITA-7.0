@@ -232,7 +232,13 @@ class ScenarioGenerator:
                         ),  # at the end of the lane
                         PositionEstimate(
                             target_lane_id,
-                            float(int(self.map_service.get_lane_by_id(target_lane_id).length)),
+                            float(
+                                int(
+                                    self.map_service.get_lane_by_id(
+                                        target_lane_id
+                                    ).length
+                                )
+                            ),
                         ),
                     )
                 options.remove(lane_id)
@@ -345,80 +351,101 @@ class ScenarioGenerator:
         frequency: int,
         reference_time: float,
     ) -> List[PerceptionObstacle]:
-        rx, ry = self.generate_obs_reference_path(
-            obstacle.initial_position, obstacle.final_position
-        )
-        reference_linestring = LineString([(x, y) for x, y in zip(rx, ry)])
-        k_max_reference_length = obstacle.speed * scenario_length  # meters
-        if reference_linestring.length > k_max_reference_length:
-            the_cut = cut(reference_linestring, k_max_reference_length)
-            rx, ry = the_cut[0].xy
-
-        planner_sample_distance = 0.5
-        cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(
-            rx, ry, ds=planner_sample_distance
-        )
-        state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
-        last_idx = len(cx) - 1
-
-        x = [state.x]
-        y = [state.y]
-        yaw = [state.yaw]
-        v = [state.v]
-        t = [0.0]
-        if obstacle.motion == ObstacleMotion.DYNAMIC:
-            target_speed = [obstacle.speed for _ in range(len(cx))]
-            for i in range(len(target_speed)):
-                if abs(ck[i]) > 0.1:
-                    target_speed[i] = min(target_speed[i], 4.0)
-        else:
-            target_speed = [0.0 for _ in range(len(cx))]
-        L = obstacle.length
-        target_idx, _ = stanley_controller.calc_target_index(state, cx, cy, L)
+        x, y, yaw, v, t = [], [], [], [], []
         dt = 1.0 / frequency
         current_time = 0.0
 
-        # while current_time < scenario_length and last_idx > target_idx:
-        for i in range(int(scenario_length * frequency)):
-            di, target_idx = stanley_controller.stanley_control(
-                state, cx, cy, cyaw, target_idx, L
-            )
-            if target_idx == last_idx:
-                # reached to goal, stop
+        if (
+            obstacle.initial_position.is_specified_by_coordinates()
+            and obstacle.motion == ObstacleMotion.STATIC
+        ):
+            x = [obstacle.initial_position.x_coord]
+            y = [obstacle.initial_position.y_coord]
+            yaw = [obstacle.initial_position.heading]
+            v = [0.0]
+            t = [0.0]
+            for i in range(int(scenario_length * frequency)):
                 current_time += dt
                 x.append(x[-1])
                 y.append(y[-1])
                 yaw.append(yaw[-1])
-                v.append(0.0)
+                v.append(v[-1])
                 t.append(current_time)
-            else:
-                # have not reached to goal, keep going
-                # distance needed to decelerate to zero
-                # v^2 = u^2 + 2as
-                # 2as = v^2 - u^2
-                # s = (v^2 - u^2) / 2a
-                k_decelerate_distance = obstacle.speed**2 / (2 * 4.0)
-                k_decelerate_index = int(
-                    k_decelerate_distance / planner_sample_distance
-                )
-                if last_idx - target_idx < k_decelerate_index:
-                    prev_v = v[-1]
-                    target_v = round(
-                        target_speed[target_idx]
-                        * (last_idx - target_idx)
-                        / k_decelerate_index,
-                        2,
-                    )
-                    target_speed[target_idx] = min(prev_v, target_v)
-                ai = stanley_controller.pid_control(target_speed[target_idx], state.v)
-                state.update(ai, di, L, dt)
-                current_time += dt
+        else:
+            rx, ry = self.generate_obs_reference_path(
+                obstacle.initial_position, obstacle.final_position
+            )
+            reference_linestring = LineString([(x, y) for x, y in zip(rx, ry)])
+            k_max_reference_length = obstacle.speed * scenario_length  # meters
+            if reference_linestring.length > k_max_reference_length:
+                the_cut = cut(reference_linestring, k_max_reference_length)
+                rx, ry = the_cut[0].xy
 
-                x.append(state.x)
-                y.append(state.y)
-                yaw.append(state.yaw)
-                v.append(state.v)
-                t.append(current_time)
+            planner_sample_distance = 0.5
+            cx, cy, cyaw, ck, _ = cubic_spline_planner.calc_spline_course(
+                rx, ry, ds=planner_sample_distance
+            )
+            state = stanley_controller.State(x=cx[0], y=cy[0], yaw=cyaw[0], v=0.0)
+            last_idx = len(cx) - 1
+
+            x = [state.x]
+            y = [state.y]
+            yaw = [state.yaw]
+            v = [state.v]
+            t = [0.0]
+            if obstacle.motion == ObstacleMotion.DYNAMIC:
+                target_speed = [obstacle.speed for _ in range(len(cx))]
+                for i in range(len(target_speed)):
+                    if abs(ck[i]) > 0.1:
+                        target_speed[i] = min(target_speed[i], 4.0)
+            else:
+                target_speed = [0.0 for _ in range(len(cx))]
+            L = obstacle.length
+            target_idx, _ = stanley_controller.calc_target_index(state, cx, cy, L)
+
+            # while current_time < scenario_length and last_idx > target_idx:
+            for i in range(int(scenario_length * frequency)):
+                di, target_idx = stanley_controller.stanley_control(
+                    state, cx, cy, cyaw, target_idx, L
+                )
+                if target_idx == last_idx:
+                    # reached to goal, stop
+                    current_time += dt
+                    x.append(x[-1])
+                    y.append(y[-1])
+                    yaw.append(yaw[-1])
+                    v.append(0.0)
+                    t.append(current_time)
+                else:
+                    # have not reached to goal, keep going
+                    # distance needed to decelerate to zero
+                    # v^2 = u^2 + 2as
+                    # 2as = v^2 - u^2
+                    # s = (v^2 - u^2) / 2a
+                    k_decelerate_distance = obstacle.speed**2 / (2 * 4.0)
+                    k_decelerate_index = int(
+                        k_decelerate_distance / planner_sample_distance
+                    )
+                    if last_idx - target_idx < k_decelerate_index:
+                        prev_v = v[-1]
+                        target_v = round(
+                            target_speed[target_idx]
+                            * (last_idx - target_idx)
+                            / k_decelerate_index,
+                            2,
+                        )
+                        target_speed[target_idx] = min(prev_v, target_v)
+                    ai = stanley_controller.pid_control(
+                        target_speed[target_idx], state.v
+                    )
+                    state.update(ai, di, L, dt)
+                    current_time += dt
+
+                    x.append(state.x)
+                    y.append(state.y)
+                    yaw.append(state.yaw)
+                    v.append(state.v)
+                    t.append(current_time)
 
         obstacle_messages: List[PerceptionObstacle] = list()
         for i in range(len(x)):
@@ -528,6 +555,7 @@ class ScenarioGenerator:
                         msg,
                         int(msg.header.timestamp_sec * 1e9),
                     )
+                    print(msg)
                 else:
                     raise Exception
 

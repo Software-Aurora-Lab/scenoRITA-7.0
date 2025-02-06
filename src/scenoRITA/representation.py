@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from random import randint
-from typing import List, Set
+from typing import List, Set, Optional
 
 from deap import base
 
@@ -22,8 +22,21 @@ class ObstacleMotion(Enum):
 
 @dataclass(slots=True)
 class ObstaclePosition:
-    lane_id: str
-    index: int
+    lane_id: Optional[str] = None
+    index: Optional[int] = None
+    x_coord: Optional[float] = None
+    y_coord: Optional[float] = None
+    z_coord: Optional[float] = None
+    heading: Optional[float] = None
+
+    def is_specified_by_coordinates(self):
+        return all(
+            x is not None
+            for x in [self.x_coord, self.y_coord, self.z_coord, self.heading]
+        )
+
+    def is_specified_by_lane_and_index(self):
+        return all(x is not None for x in [self.lane_id, self.index])
 
 
 class ObstacleFitness(base.Fitness):
