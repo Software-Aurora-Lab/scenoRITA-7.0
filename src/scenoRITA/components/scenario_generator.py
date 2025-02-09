@@ -555,7 +555,6 @@ class ScenarioGenerator:
                         msg,
                         int(msg.header.timestamp_sec * 1e9),
                     )
-                    print(msg)
                 else:
                     raise Exception
 
