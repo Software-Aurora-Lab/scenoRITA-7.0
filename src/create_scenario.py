@@ -1,4 +1,5 @@
 from apollo.container import ApolloContainer
+from apollo.utils import change_apollo_map
 from config import APOLLO_ROOT, PROJECT_NAME
 from pathlib import Path
 from apollo.map_service import load_map_service
@@ -90,6 +91,7 @@ scenario = Scenario(
 
 map_service = load_map_service("borregas_ave")
 scenario_generator = ScenarioGenerator(map_service)
+change_apollo_map("borregas_ave")
 
 scenario_length = 30  # seconds
 input_record = "scenario.input.00000"
