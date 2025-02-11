@@ -139,8 +139,15 @@ class ApolloContainer:
     def start_replay(self, filename: str):
         # cyber_recorder play -f <file>
         # TODO: add --log_dir=/apollo/data/log
+        topics = [
+            "/apollo/perception/obstacles",
+            "/apollo/perception/traffic_light",
+            "/apollo/routing_request",
+        ]
         cyber_recorder = "/apollo/bazel-bin/cyber/tools/cyber_recorder/cyber_recorder"
-        cmd = f"{cyber_recorder} play -f {filename}"
+        cmd = f"{cyber_recorder} play -f {filename} -c " + " ".join(topics)
+        print(cmd)
+        return
         self.exec(cmd, detached=True)
 
     def stop_replay(self):
