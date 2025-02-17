@@ -146,8 +146,6 @@ class ApolloContainer:
         ]
         cyber_recorder = "/apollo/bazel-bin/cyber/tools/cyber_recorder/cyber_recorder"
         cmd = f"{cyber_recorder} play -f {filename} -c " + " ".join(topics)
-        print(cmd)
-        return
         self.exec(cmd, detached=True)
 
     def stop_replay(self):
