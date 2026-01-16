@@ -43,19 +43,23 @@ class Speeding(BaseMetric):
         ego_vy = msg.pose.linear_velocity.y
         ego_speed = math.sqrt(ego_vx**2 + ego_vy**2)
         ego_point = Point(ego_x, ego_y)
-        ego_lane = self.map_service.get_nearest_lanes_with_heading(ego_point, ego_theta)
-        ego_lane.sort(key=lambda x: self.map_service.get_lane_by_id(x).speed_limit)
-
-        if len(ego_lane) == 0:
-            # TODO: ego is not on any lane
+        ego_lanes = self.map_service.get_nearest_lanes_with_heading(ego_point, ego_theta)
+        
+        if not ego_lanes:
             self.speeding_trace.append(SpeedingTrace(t, False))
             return
-        current_lane = ego_lane[0]
-        current_lane_speed = self.map_service.get_lane_by_id(current_lane).speed_limit
-        if current_lane_speed == 0.0:
-            # TODO: no speed limit on lane
+        
+        lane_speed_limits = [
+            self.map_service.get_lane_by_id(lane_id).speed_limit
+            for lane_id in ego_lanes
+            if self.map_service.get_lane_by_id(lane_id).speed_limit > 0.0
+        ]
+        
+        if not lane_speed_limits:
             self.speeding_trace.append(SpeedingTrace(t, False))
             return
+        
+        current_lane_speed = max(lane_speed_limits)
 
         self.obs_fitness = min(self.obs_fitness, current_lane_speed - ego_speed)
 
