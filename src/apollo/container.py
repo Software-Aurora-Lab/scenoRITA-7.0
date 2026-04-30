@@ -47,12 +47,20 @@ class ApolloContainer:
 
     def container_ip(self) -> str:
         """
-        Gets the ip address of the container
+        Gets the IP address of the container
         :returns: IP address of this container
         """
         assert self.is_running(), f"Container {self.container_name} is not running."
-        ctn = docker.from_env().containers.get(self.container_name)
-        return ctn.attrs["NetworkSettings"]["IPAddress"]
+
+        client = docker.from_env()
+        ctn = client.containers.get(self.container_name)
+
+        networks = ctn.attrs["NetworkSettings"]["Networks"]
+        if not networks:
+            raise RuntimeError(f"Container {self.container_name} is not attached to any network.")
+
+        # Get IP from the first network (or specify one explicitly)
+        return next(iter(networks.values()))["IPAddress"]
 
     def exists(self) -> bool:
         """
