@@ -1,38 +1,47 @@
-[tool.poetry]
+[project]
 name = "scenorita-v3"
 version = "0.1.0"
 description = ""
-authors = ["Y <yhuai@uci.edu>"]
 readme = "README.md"
-packages = [{include = "src"}]
+requires-python = ">=3.10,<3.12"
 
-[tool.poetry.dependencies]
-python = ">=3.10,<3.12"
-loguru = "^0.7.0"
-absl-py = "^1.4.0"
-cyber-record = "^0.1.12"
-numpy = "^1.24.2"
-pandas = "^2.0.0"
-shapely = "^2.0.1"
-matplotlib = "^3.7.1"
-networkx = "^3.1"
-docker = "^6.0.1"
-nanoid = "^2.0.0"
-deap = "^1.3.3"
-scipy = "^1.10.1"
-kneed = "^0.8.2"
-scikit-learn = "^1.2.2"
+authors = [
+  { name = "Y", email = "yhuai@uci.edu" }
+]
 
+dependencies = [
+  "loguru>=0.7.0,<0.8.0",
+  "absl-py>=1.4.0,<2.0.0",
+  "cyber-record>=0.1.12,<0.2.0",
+  "numpy>=1.24.2,<2.0.0",
+  "pandas>=2.0.0,<3.0.0",
+  "shapely>=2.0.1,<3.0.0",
+  "matplotlib>=3.7.1,<4.0.0",
+  "networkx>=3.1,<4.0.0",
+  "docker>=6.0.1,<7.0.0",
+  "nanoid>=2.0.0,<3.0.0",
+  "deap>=1.3.3,<2.0.0",
+  "scipy>=1.10.1,<2.0.0",
+  "kneed>=0.8.2,<0.9.0",
+  "scikit-learn>=1.2.2,<2.0.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-mypy = "^1.2.0"
-black = "^23.3.0"
-isort = "^5.12.0"
-ruff = "^0.0.261"
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.2.0,<2.0.0",
+  "black>=23.3.0,<24.0.0",
+  "isort>=5.12.0,<6.0.0",
+  "ruff>=0.0.261,<1.0.0",
+]
 
+# Use setuptools instead of poetry-core
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+# Needed for your src/ layout
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.mypy]
 ignore_missing_imports = true
