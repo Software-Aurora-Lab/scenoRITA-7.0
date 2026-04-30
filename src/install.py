@@ -93,11 +93,29 @@ def install_sim_control_standalone():
         ctn.start_container(start_script=SCRIPTS.DEV_START, verbose=True)
     ctn.exec("bash apollo.sh build sim_control_standalone", verbose=True)
 
+def install_hd_maps():
+    hd_maps = Path(DATA_DIR, "maps")
+    for map_dir in hd_maps.iterdir():
+        if not map_dir.is_dir():
+            continue
+        target_dir = Path(
+            APOLLO_ROOT, "modules", "map", "data", map_dir.name
+        )
+        # sync map_dir to target_dir
+        # do not skip existing files, but overwrite them if they are different
+        logger.info(f"Installing HD map {map_dir.name} to {target_dir}")
+        if target_dir.exists():
+            logger.info(f"Removing existing map directory {target_dir}")
+            shutil.rmtree(target_dir)
+        shutil.copytree(map_dir, target_dir)
+            
+    pass
 
 if __name__ == "__main__":
     start = perf_counter()
     download_apollo()
     change_script_permissions()
+    install_hd_maps()
     compile_apollo()
     install_sim_control_standalone()
     ctn = ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_installer")
