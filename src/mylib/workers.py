@@ -119,7 +119,8 @@ def analysis_worker(
             )
         else:
             grading_result = grade_scenario(
-                scenario.get_id(), target_input_file, map_service
+                scenario.get_id(), target_input_file, map_service,
+                _logger
             )
             if grading_result is None:
                 _logger.error(f"{sce_id}: grading failed after 3 retries.")

@@ -6,6 +6,7 @@ from typing import Dict, List, Optional, Tuple
 from cyber_record.record import Record
 
 from apollo.map_service import MapService
+from logging import Logger
 
 from .metrics import (
     Collision,
@@ -42,7 +43,8 @@ def get_grading_metrics(
 
 
 def grade_scenario(
-    scenario_id: str, record: Path, map_service: MapService
+    scenario_id: str, record: Path, map_service: MapService,
+    logger: Optional[Logger] = None,
 ) -> Optional[GradingResult]:
     trial = 0
     while trial < 3:
@@ -77,14 +79,16 @@ def grade_scenario(
                     fast_accel.get_fitness(),  # fast accel
                     hard_braking.get_fitness(),  # hard braking
                 )
-
+            logger.info(f"analyzed {scenario_id}")
             return GradingResult(
                 scenario_id,
                 record,
                 fitness,
                 violations,
             )
-        except Exception:
+        except Exception as e:
+            if logger:
+                logger.error(f"Error occurred while grading scenario {scenario_id}: {e}")
             trial += 1
             time.sleep(1)
     return None
