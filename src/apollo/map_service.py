@@ -12,7 +12,7 @@ import networkx as nx
 from shapely.geometry import LineString, Point
 from shapely.geometry.base import BaseGeometry
 
-from config import MAPS_DIR, SUPPORTED_MAPS
+from config import MAPS_DIR
 from modules.map.proto.map_crosswalk_pb2 import Crosswalk
 from modules.map.proto.map_junction_pb2 import Junction
 from modules.map.proto.map_lane_pb2 import Lane, LaneBoundary
@@ -38,9 +38,6 @@ class PositionEstimate:
 
 
 def load_map_service(map_name: str, refresh=False) -> "MapService":
-    assert (
-        map_name in SUPPORTED_MAPS
-    ), f"Unsupported map {map_name}. Expected one of {SUPPORTED_MAPS}"
     map_bin = Path(MAPS_DIR, map_name, "base_map.bin")
     map_pic = Path(MAPS_DIR, map_name, "base_map.pickle")
 

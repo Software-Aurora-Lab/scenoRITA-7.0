@@ -1,3 +1,5 @@
+import shutil
+
 from apollo.container import ApolloContainer
 from apollo.utils import change_apollo_map
 from config import APOLLO_ROOT, PROJECT_NAME
@@ -91,7 +93,6 @@ scenario = Scenario(
 
 map_service = load_map_service("borregas_ave")
 scenario_generator = ScenarioGenerator(map_service)
-change_apollo_map("borregas_ave")
 
 scenario_length = 30  # seconds
 input_record = "scenario.input.00000"
@@ -110,6 +111,11 @@ initial_x, initial_y = initial_position.x, initial_position.y
 # start container
 ctn = ApolloContainer(APOLLO_ROOT, f"{PROJECT_NAME}_dev_start")
 ctn.start_container(verbose=True)
+
+
+# change map used by Apollo
+_, map_path = change_apollo_map(ctn, "borregas_ave")
+
 ctn.start_dreamview()
 print(f"Dreamview running at {ctn.dreamview_url}")
 
@@ -126,5 +132,8 @@ run_scenario(
     initial_y,
     initial_heading,
 )
+
+# remove map from container
+shutil.rmtree(map_path)
 
 print("Done")

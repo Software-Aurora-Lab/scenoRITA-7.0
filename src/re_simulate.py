@@ -54,14 +54,15 @@ def main(argv):
     logger.info("Length of experiment: {}h", FLAGS.num_hour)
     logger.info("Obstacle Range: {} - {}", FLAGS.min_obs, FLAGS.max_obs)
 
-    # change map used by Apollo
-    logger.info("Changing map to " + FLAGS.map)
-    change_apollo_map(FLAGS.map)
-
     # start up Apollo containers
     logger.info("Starting up Apollo containers")
     containers = start_containers(1)
     container = containers[0]
+    
+    # change map used by Apollo
+    logger.info("Changing map to " + FLAGS.map)
+    _, map_path = change_apollo_map(container, FLAGS.map)
+    
     container.start_dreamview()
 
     # loading map service
@@ -95,6 +96,8 @@ def main(argv):
         container.stop_replay()
         container.stop_ads_modules()
         container.stop_sim_control()
+    
+    shutil.rmtree(map_path)
 
 
 if __name__ == "__main__":

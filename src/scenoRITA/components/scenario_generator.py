@@ -170,7 +170,8 @@ class ScenarioGenerator:
         return result
 
     def generate_ego_car(self) -> EgoCar:
-        generate_junction_scenario = random.random() < 0.9
+        generate_junction_scenario = random.random() < 0.9 and \
+            len(self.map_service.junction_lanes) > 0
         if generate_junction_scenario:
             junction_lanes = self.map_service.junction_lanes
             while True:
@@ -220,6 +221,7 @@ class ScenarioGenerator:
             lane_ids = self.map_service.non_junction_lanes
             routing_starts = self.map_service.routing_graph.nodes()
             options = list(set(lane_ids) & set(routing_starts))
+            assert len(options) > 0, "No valid lane to generate ego car"
             while True:
                 lane_id = random.choice(options)
                 lane_length = self.map_service.get_length_of_lane(lane_id)

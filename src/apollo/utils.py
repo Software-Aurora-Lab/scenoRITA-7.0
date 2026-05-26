@@ -2,8 +2,10 @@ import math
 import shutil
 from pathlib import Path
 from typing import List, Tuple
+from nanoid import generate as nanoid_generate
 
-from config import APOLLO_FLAGFILE, APOLLO_ROOT, MAPS_DIR, SUPPORTED_MAPS
+from apollo.container import ApolloContainer
+from config import APOLLO_FLAGFILE, APOLLO_ROOT, MAPS_DIR
 
 USING_LGSVL = False
 APOLLO_VEHICLE_LENGTH = 4.933
@@ -30,23 +32,46 @@ def clean_apollo_logs():
         log_file.unlink()
 
 
-def change_apollo_map(map_name: str) -> None:
+def change_apollo_map(ctn: ApolloContainer, map_name: str) -> Tuple[str, Path]:
     """
     Change the map used by Apollo
     :param str map_name: name of the map to use
     """
-    assert map_name in SUPPORTED_MAPS, f"Unsupported map: {map_name}"
+    assert ctn.is_running(), "Apollo container is not running"
+    map_bin = Path(MAPS_DIR, map_name, "base_map.bin")
+    assert map_bin.exists(), f"Map binary file not found: {map_bin}"
+    
+    # copy map binary to Apollo container
+    dst_map_id = ""
+    while True:
+        dst_map_id = "scenoRITA_" + \
+            nanoid_generate("abcdefghijklmnopqrstuvwxyz0123456789", size=10)
+        if not (Path(APOLLO_ROOT, "data", dst_map_id).exists()):
+            break
+    
     APOLLO_FLAGFILE.parent.mkdir(parents=True, exist_ok=True)
     with open(APOLLO_FLAGFILE, "a") as fp:
-        fp.write(f"\n--map_dir=/apollo/modules/map/data/{map_name}\n")
+        fp.write(f"\n--map_dir=/apollo/modules/map/data/{dst_map_id}\n")
 
-    apollo_map_dir = Path(APOLLO_ROOT, "modules", "map", "data", map_name)
-    apollo_map_dir.parent.mkdir(parents=True, exist_ok=True)
-    if not apollo_map_dir.exists():
-        shutil.copytree(
-            Path(MAPS_DIR, map_name),
-            apollo_map_dir,
-        )
+    dst_map_path = Path(APOLLO_ROOT, "modules", "map", "data", dst_map_id)
+    dst_map_path.mkdir(parents=True, exist_ok=True)
+
+    in_docker_map_path = Path("/apollo/modules/map/data", dst_map_id)
+    # copy map binary to apollo folder
+    shutil.copy(map_bin, dst_map_path)
+    ctn.exec(f"bash /apollo/scripts/generate_routing_topo_graph.sh"
+             f" --map_dir {in_docker_map_path}")
+    ctn.exec(f"bazel-bin/modules/map/tools/sim_map_generator "
+             f"--map_dir={in_docker_map_path} "
+             f"--output_dir={in_docker_map_path}")
+    # check if map binary is generated successfully
+    if not Path(dst_map_path, "base_map.bin").exists():
+        raise FileNotFoundError(f"Failed to copy map binary in {dst_map_path}")
+    if not Path(dst_map_path, "routing_map.bin").exists():
+        raise FileNotFoundError(f"Failed to generate routing map binary in {dst_map_path}")
+    if not Path(dst_map_path, "sim_map.bin").exists():
+        raise FileNotFoundError(f"Failed to generate sim map binary in {dst_map_path}")
+    return dst_map_id, dst_map_path
 
 
 def generate_polygon(

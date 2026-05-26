@@ -184,13 +184,13 @@ def main(argv):
     logger.info("Length of experiment: {}h", FLAGS.num_hour)
     logger.info("Obstacle Range: {} - {}", FLAGS.min_obs, FLAGS.max_obs)
 
-    # change map used by Apollo
-    logger.info("Changing map to " + FLAGS.map)
-    change_apollo_map(FLAGS.map)
-
     # start up Apollo containers
     logger.info("Starting up Apollo containers")
     containers = start_containers(FLAGS.num_adc)
+
+    # change map used by Apollo
+    logger.info("Changing map to " + FLAGS.map)
+    _, map_path = change_apollo_map(containers[0], FLAGS.map)
 
     # loading map service
     logger.info(f"Loading map service for {FLAGS.map}")
@@ -271,6 +271,8 @@ def main(argv):
         logger.info(
             f"{violation_name}: {num_violation} violations in {num_cluster} clusters"
         )
+    
+    shutil.rmtree(map_path)
 
 
 if __name__ == "__main__":

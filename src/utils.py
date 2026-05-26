@@ -44,7 +44,8 @@ def set_up_gflags():
 
 
 def get_output_dir(root: Path = PROJECT_ROOT, mkdir: bool = True) -> Path:
-    result = Path(root, "out", f"{FLAGS.execution_id}_{FLAGS.map}")
+    safe_map = FLAGS.map.replace("/", "_")
+    result = Path(root, "out", f"{FLAGS.execution_id}_{safe_map}")
     if not result.exists() and mkdir:
         result.mkdir(parents=True)
     return result
@@ -52,7 +53,7 @@ def get_output_dir(root: Path = PROJECT_ROOT, mkdir: bool = True) -> Path:
 
 def get_log_file() -> Path:
     return Path(
-        PROJECT_ROOT, "out", f"{FLAGS.execution_id}_{FLAGS.map}", f"{PROJECT_NAME}.log"
+        get_output_dir(), f"{PROJECT_NAME}.log"
     )
 
 
